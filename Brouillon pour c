@@ -2,3 +2,5 @@ CODE DE COMPILATION pour l'interface : gcc -Wall -o Interface Interface.c `pkg-c
 
 CODE DE COMPILATION pour le programme requete en c: gcc -Wall -o Wicookin Wicookin.c -lcurl
 
+
+CODE DE COMPILATION pour le graphique: gcc -Wall -o Graphique Graphique.c `pkg-config --cflags --libs gtk+-3.0`
