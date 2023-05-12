@@ -29,5 +29,7 @@ int main(int argc, char *argv[])
     curl_easy_cleanup(curl);
   }
   
+  printf("C'est trop bien le C !");
+  
   return 0;
 }
