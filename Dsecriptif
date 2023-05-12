@@ -1,0 +1,13 @@
+Ce code C utilise la bibliothèque GTK et la bibliothèque cURL pour créer une application graphique qui effectue une requête à une API. L'application comprend trois fenêtres différentes : la première fenêtre permet à l'utilisateur de saisir son nom et son adresse e-mail, la deuxième fenêtre lui permet de saisir un nombre de paramètres à envoyer à l'API et de saisir ces paramètres, et la troisième fenêtre affiche la réponse de l'API.
+
+La fonction close_window est appelée lorsque l'utilisateur clique sur le bouton "Fermer" dans une fenêtre. Elle ferme simplement la fenêtre en question.
+
+Les fonctions on_button_name et on_button_mail sont appelées lorsque l'utilisateur clique sur les boutons correspondants dans la première fenêtre. Elles récupèrent les données saisies par l'utilisateur dans les champs de saisie correspondants et les affichent dans la console à l'aide de la fonction g_print.
+
+La fonction on_button_nbparam est appelée lorsque l'utilisateur clique sur le bouton "Envoyer" dans la deuxième fenêtre. Elle récupère le nombre de paramètres saisi par l'utilisateur et le stocke dans la variable globale global_result.
+
+La fonction on_button_param est appelée lorsque l'utilisateur clique sur le bouton "Envoyer" dans la deuxième fenêtre. Elle récupère le paramètre saisi par l'utilisateur, le stocke dans la variable globale param, et l'affiche dans la console à l'aide de la fonction g_print.
+
+La fonction open_window3 est appelée lorsque l'utilisateur clique sur le bouton "Envoyer" dans la deuxième fenêtre. Elle crée une nouvelle fenêtre, construit une URL en ajoutant le paramètre saisi par l'utilisateur à une URL de base, effectue une requête à l'API en utilisant cURL, récupère la réponse de l'API, et l'affiche dans une zone de texte dans la troisième fenêtre.
+
+Enfin, la fonction open_window2 est appelée lorsque l'utilisateur clique sur le bouton "Envoyer" dans la première fenêtre. Elle crée une nouvelle fenêtre qui permet à l'utilisateur de saisir le nombre de paramètres à envoyer à l'API et de saisir ces paramètres.

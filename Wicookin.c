@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
   CURL *curl;
   CURLcode res;
-  char chaine1[100] = "https://pokebuildapi.fr/api/v1";
+  char chaine1[100] = "https://pokebuildapi.fr/api/v1/pokemon";
   char chaine2[100] = "";
   
   strcat(chaine1,chaine2);
