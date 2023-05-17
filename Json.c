@@ -1,55 +1,69 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <curl/curl.h>
+#include <gtk/gtk.h>
 #include <string.h>
 
-// Fonction de rappel pour écrire les données de réponse dans une chaîne
-size_t write_callback(void* contents, size_t size, size_t nmemb, char** response) {
-    size_t realsize = size * nmemb;
-    *response = realloc(*response, realsize + 1);
-    if (*response == NULL) {
-        printf("Erreur de mémoire lors de l'allocation du tampon de réponse.\n");
-        return 0;
-    }
-    memcpy(*response, contents, realsize);
-    (*response)[realsize] = '\0';
-    return realsize;
+GtkWidget *window1, *window2;
+
+// Fonction qui permet de fermer une fenêtre GTK
+void close_window(GtkWidget *widget, gpointer data) {
+    gtk_widget_destroy(GTK_WIDGET(data));
 }
 
-int main() {
-    CURL* curl;
-    CURLcode res;
-
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-
-    curl = curl_easy_init();
-    if (curl) {
-        char* response = NULL;
-
-        // Configuration de l'URL de l'API
-        curl_easy_setopt(curl, CURLOPT_URL, "https://pokebuildapi.fr/api/v1/pokemon/type");
-
-        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-        // Exécution de la requête
-        res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
-            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
-        } else {
-            // Affichage de la réponse
-            printf("Réponse de l'API :\n%s\n", response);
-        }
-
-        // Nettoyage
-        free(response);
-        curl_easy_cleanup(curl);
-    } else {
-        printf("Erreur lors de l'initialisation de cURL.\n");
+// Fonction de rappel qui se déclenche lorsque le bouton est cliqué
+void on_button_clicked(GtkButton *button, gpointer user_data) {
+    if (g_strcmp0(gtk_button_get_label(button), "Recipes") == 0) {
+        // Code à exécuter pour le bouton Recipes
+        g_print("Bouton Recipes a été cliqué.\n");
+        // Ouverture de la fenêtre 2
+        gtk_widget_show_all(window2);
+    } else if (g_strcmp0(gtk_button_get_label(button), "Ingredients") == 0) {
+        // Code à exécuter pour le bouton Ingredients
+        g_print("Bouton Ingredients a été cliqué.\n");
+        // Ouverture de la fenêtre 2
+        gtk_widget_show_all(window2);
     }
+}
 
-    curl_global_cleanup();
+int main(int argc, char *argv[]) {
+    GtkWidget *button1, *button2, *vbox1;
+
+    gtk_init(&argc, &argv);
+
+    // Création de la fenêtre 1
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "Accueil");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Création d'une boîte verticale pour contenir les boutons
+    vbox1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_add(GTK_CONTAINER(window1), vbox1);
+
+    // Création des boutons
+    button1 = gtk_button_new_with_label("Recipes");
+    button2 = gtk_button_new_with_label("Ingredients");
+
+    // Connexion des signaux "clicked" des boutons à la fonction de rappel
+    g_signal_connect(button1, "clicked", G_CALLBACK(on_button_clicked), NULL);
+    g_signal_connect(button2, "clicked", G_CALLBACK(on_button_clicked), NULL);
+
+    // Ajout des boutons à la boîte verticale
+    gtk_box_pack_start(GTK_BOX(vbox1), button1, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox1), button2, TRUE, TRUE, 0);
+
+    // Création de la fenêtre 2
+    window2 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window2), "Fenêtre 2");
+    gtk_window_set_default_size(GTK_WINDOW(window2), 400, 400);
+    g_signal_connect(window2, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Affichage des fenêtres
+    gtk_widget_show_all(window1);
+    gtk_widget_hide(window2); // Masquer la fenêtre 2 initialement
+
+    gtk_main();
 
     return 0;
 }
+

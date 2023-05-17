@@ -8,11 +8,13 @@
 GtkWidget *window1, *window2, *window3;
 //char *chaine;
 gchar *chaine;
+FILE *data; // Déclaration du pointeur de fichier global
 
 // Fonction de rappel pour écrire les données de réponse dans une chaîne
 size_t write_callback(void* contents, size_t size, size_t nmemb, char** response) {
-    size_t realsize = size * nmemb;
+	size_t realsize = size * nmemb;
     *response = realloc(*response, realsize + 1);
+    
     if (*response == NULL) {
         printf("Erreur de mémoire lors de l'allocation du tampon de réponse.\n");
         return 0;
@@ -22,21 +24,38 @@ size_t write_callback(void* contents, size_t size, size_t nmemb, char** response
     return realsize;
 }
 
+// Fonction de rappel pour écrire les données de réponse dans un fichier
+size_t write_callback2(void* contents, size_t size, size_t nmemb, FILE* file) {
+    return fwrite(contents, size, nmemb, file);
+}
+
+// Fonction qui permet de fermer une fenetre gtk
 void close_window(GtkWidget *widget, gpointer data) {
     gtk_widget_destroy(data);
 }
 
-
+// Fonction de rappel qui se declenche lorsque le bouton est cliqué et affichage d'un print dans le Terminal
 void on_button_name(GtkButton *button, gpointer user_data) {
     GtkWidget *entry = GTK_WIDGET(user_data);
     const gchar *name = gtk_entry_get_text(GTK_ENTRY(entry));
     g_print("Le nom saisi est : %s\n", name);
+    if (data == NULL) {
+        printf("Erreur lors de l'ouverture du fichier\n");
+        
+    }
+    fprintf(data, "%s\n",name);
 }
 
+// Fonction de rappel qui se declenche lorsque le bouton est cliqué et affichage d'un print dans le Terminal
 void on_button_mail(GtkButton *button, gpointer user_data) {
     GtkWidget *entry = GTK_WIDGET(user_data);
     const gchar *mail = gtk_entry_get_text(GTK_ENTRY(entry));
     g_print("Le mail saisi est : %s\n", mail);
+    if (data == NULL) {
+        printf("Erreur lors de l'ouverture du fichier\n");
+        
+    }
+    fprintf(data, "%s\n",mail);
 }
 
 int global_result; // Variable globale pour stocker le résultat
@@ -50,6 +69,11 @@ void on_button_nbparam(GtkButton *button ,gpointer user_data) {
     //char tab[100] = nbpamarm;
     global_result = atoi(nbparam);
     printf("Le résultat est : %d\n", global_result);
+    if (data == NULL) {
+        printf("Erreur lors de l'ouverture du fichier\n");
+        
+    }
+    fprintf(data, "%s\n",nbparam);
 }
 
 const gchar *param;
@@ -69,6 +93,36 @@ void on_button_param(const gchar* tab, gpointer user_data) {
     }*/
   
     
+}
+
+// Fonction pour lire le contenu d'un fichier et le stocker dans une chaîne de caractères
+char* read_file(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Impossible d'ouvrir le fichier.\n");
+        return NULL;
+    }
+
+    // Déterminer la taille du fichier
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
+
+    // Allouer un tampon pour le contenu du fichier
+    char* buffer = (char*)malloc((file_size + 1) * sizeof(char));
+    if (buffer == NULL) {
+        fclose(file);
+        printf("Erreur de mémoire lors de l'allocation du tampon.\n");
+        return NULL;
+    }
+
+    // Lire le contenu du fichier dans le tampon
+    fread(buffer, sizeof(char), file_size, file);
+    buffer[file_size] = '\0';
+
+    fclose(file);
+
+    return buffer;
 }
 
 
@@ -96,22 +150,25 @@ void open_window3() {
  
    	curl = curl_easy_init();
     
-    if(curl) {
+	if(curl) {
+    		FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
   		char* response = NULL;
-  		const gchar *json_text = "https://pokebuildapi.fr/api/v1/pokemon/type/";
+  		const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
   		
   		gchar *result = g_strdup_printf("%s%s", json_text, param);
   		// Configuration de l'URL de l'API
-        curl_easy_setopt(curl, CURLOPT_URL, result);
+        	curl_easy_setopt(curl, CURLOPT_URL, result);
+        
         
         
         
         // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
   	
   		
-    	
+    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
     //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
     //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
     //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
@@ -120,7 +177,9 @@ void open_window3() {
     
     	
     
-    
+    	// Lire le contenu du fichier
+   	const char* filename = "reponse.txt";
+    	char* file_content = read_file(filename);
     
     
 
@@ -131,8 +190,8 @@ void open_window3() {
         } else {
             // Affichage de la réponse
             printf("Réponse de l'API :\n%s\n", response);
-            const gchar *j = g_strdup(response);
-            
+            //const gchar *j = g_strdup(response);
+            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
             // Création d'un widget de texte
     
    
@@ -144,8 +203,8 @@ void open_window3() {
     		GtkWidget *text_view = gtk_text_view_new();
     		
     		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-   			 gtk_text_buffer_set_text(buffer, j , -1);
-   			 
+   			// gtk_text_buffer_set_text(buffer, j , -1);
+   			 gtk_text_buffer_set_text(buffer, file_content, -1);
    			 
    			 
    			 // Ajout du widget GtkTextView à la fenêtre
@@ -155,7 +214,8 @@ void open_window3() {
         }
 
         // Nettoyage
-        free(response);
+       // free(response);
+       fclose(file);
         curl_easy_cleanup(curl);
     } else {
         printf("Erreur lors de l'initialisation de cURL.\n");
@@ -270,6 +330,7 @@ void open_window2() {
 
 
 int main(int argc, char *argv[]) {
+	
     GtkWidget *button1, *button2;
     GtkWidget *vbox1;
     GtkWidget *box1;
@@ -278,6 +339,9 @@ int main(int argc, char *argv[]) {
     
     //Allocation dynamique de la mémoire pour la variable globale
    // chaine = (char*)malloc(100*sizeof(char));
+   
+	data  = fopen("data.txt", "w"); // Ouverture du fichier en mode écriture
+	
     
     gtk_init(&argc, &argv);
 
@@ -288,14 +352,17 @@ int main(int argc, char *argv[]) {
     box1 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window1), box1);
     
+    //Saisi du nom dans la boite entrez votre nom
     entry1 = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry1), "Entrez votre nom");
     gtk_box_pack_start(GTK_BOX(box1), entry1, TRUE, TRUE, 0);
     
+    //Saisi du nom dans la boite entrez votre adresse mail
     entry2 = gtk_entry_new();
-    gtk_entry_set_placeholder_text(GTK_ENTRY(entry2), "Entrez votre adresse email");
+    gtk_entry_set_placeholder_text(GTK_ENTRY(entry2), "Entrez votre adresse mail");
     gtk_box_pack_start(GTK_BOX(box1), entry2, TRUE, TRUE, 0);
     
+    //Saisi du nom dans la boite entrez le nombre de paramètres que vous voulez renseigner pour votre recherche dans l'API
     entry3 = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry3), "Entrez le nombre de paramètres que vous voulez renseigner pour votre recherche dans l'API");
     gtk_box_pack_start(GTK_BOX(box1), entry3, TRUE, TRUE, 0);
