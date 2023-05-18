@@ -153,7 +153,7 @@ void open_window3() {
 	if(curl) {
     		FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
   		char* response = NULL;
-  		const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952e";
   		
   		gchar *result = g_strdup_printf("%s%s", json_text, param);
   		// Configuration de l'URL de l'API

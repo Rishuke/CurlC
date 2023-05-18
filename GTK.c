@@ -5,10 +5,37 @@
 #include <stdarg.h>
 #include <curl/curl.h>
 
-GtkWidget *window1, *window2, *window3, *window4, *window5, *window6, *window7, *window8, *window9, *window10, *window11, *window12, *window13, *window14, *window15;
+
+struct Liste{
+    const gchar* data;
+    struct Liste* next;
+};
+
+struct Liste* List = NULL; // Déclaration de la variable globale
+
+
+GtkWidget *window1, *window2, *window3, *window4, *window5, *window6, *window7, *window8, *window9, *window10, *window11, *window12, *window13, *window14, *window15, *window16, *window17, *window18, *window19, *window20, *window21;
 
 // Déclaration du pointeur de fichier global
 FILE *data;
+
+
+void addListe(const gchar* newData) {
+    struct Liste* newList = malloc(sizeof(struct Liste));
+    newList->data = newData;
+    newList->next = List;
+    List = newList;
+}
+
+
+void freeList() {
+    struct Liste* current = List;
+    while (current != NULL) {
+        struct Liste* next = current->next;
+        free(current);
+        current = next;
+    }
+}
 
 // Fonction de rappel pour écrire les données de réponse dans une chaîne
 size_t write_callback(void* contents, size_t size, size_t nmemb, char** response) {
@@ -109,17 +136,680 @@ void on_button_param(const gchar* tab, gpointer user_data) {
     GtkWidget *entry = GTK_WIDGET(user_data);
     const gchar* param = gtk_entry_get_text(GTK_ENTRY(entry));
     g_print("Le nom de parametre est : %s\n", param);
-    //printf("%d\n", global_result);
-    //int a = 0;
-    
-    /*if(a < global_result){
-    	//chaine = strcpy(chaine,(char*)param);
-    	g_stpcpy(chaine, param);
-    	a++;
-    	g_print("Le nom de parametre chaine est : %s\n", chaine);
-    }*/
+    addListe(param);
     
   
+    
+}
+
+void open_window21(GtkButton *button,gpointer user_data) {
+	GtkWidget *vbox;
+	CURL *curl;
+    CURLcode res;
+    //GtkWidget *box;
+   // GtkWidget *button1, *button2;
+    window21 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window21), "API2.3");
+    gtk_window_set_default_size(GTK_WINDOW(window21), 400, 400);
+    
+    const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
+    
+    
+    
+    
+    
+    while (List != NULL) {
+        chaine = g_strconcat(chaine, List->data, NULL);
+        List = List->next;
+    }
+    printf("\n");
+    
+    g_print("%s\n", chaine);
+    
+    curl = curl_easy_init();
+    
+	if(curl) {
+    	FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
+  		
+  		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		
+  		//gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		// Configuration de l'URL de l'API
+        curl_easy_setopt(curl, CURLOPT_URL, chaine);
+        
+        
+        
+        
+        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+  	
+  		
+    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
+    //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
+    //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
+    //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
+    //https://api.github.com/users/petrgazarov
+    
+    
+    	
+    
+    	// Lire le contenu du fichier
+   	const char* filename = "reponse.txt";
+    char* file_content = read_file(filename);
+    
+    
+
+	res = curl_easy_perform(curl);
+	
+    if (res != CURLE_OK) {
+            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
+        } else {
+            // Affichage de la réponse
+            printf("Réponse de l'API :\n%s\n", chaine);
+            //const gchar *j = g_strdup(response);
+            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
+            // Création d'un widget de texte
+    
+   
+
+    
+            
+            
+            // Création d'un widget GtkTextView pour afficher le texte JSON brut
+    		GtkWidget *text_view = gtk_text_view_new();
+    		
+    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+   			// gtk_text_buffer_set_text(buffer, j , -1);
+   			 gtk_text_buffer_set_text(buffer, file_content, -1);
+   			 
+   			 
+   			 // Ajout du widget GtkTextView à la fenêtre
+   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+   			 gtk_container_add(GTK_CONTAINER(window21), scroll_window);
+        }
+
+        // Nettoyage
+       // free(response);
+       fclose(file);
+        curl_easy_cleanup(curl);
+    } else {
+        printf("Erreur lors de l'initialisation de cURL.\n");
+    }
+
+    curl_global_cleanup();
+    
+    
+    
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_add(GTK_CONTAINER(window21), vbox);
+	
+    gtk_widget_show_all(window21);
+    
+    freeList();
+    
+}
+
+void open_window20(GtkButton *button,gpointer user_data) {
+	GtkWidget *vbox;
+	CURL *curl;
+    CURLcode res;
+    //GtkWidget *box;
+   // GtkWidget *button1, *button2;
+    window20 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window20), "API6.3");
+    gtk_window_set_default_size(GTK_WINDOW(window20), 400, 400);
+    
+    const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
+    
+    
+    
+    
+    
+    while (List != NULL) {
+        chaine = g_strconcat(chaine, List->data, NULL);
+        List = List->next;
+    }
+    printf("\n");
+    
+    g_print("%s\n", chaine);
+    
+    curl = curl_easy_init();
+    
+	if(curl) {
+    	FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
+  		
+  		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		
+  		//gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		// Configuration de l'URL de l'API
+        curl_easy_setopt(curl, CURLOPT_URL, chaine);
+        
+        
+        
+        
+        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+  	
+  		
+    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
+    //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
+    //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
+    //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
+    //https://api.github.com/users/petrgazarov
+    
+    
+    	
+    
+    	// Lire le contenu du fichier
+   	const char* filename = "reponse.txt";
+    char* file_content = read_file(filename);
+    
+    
+
+	res = curl_easy_perform(curl);
+	
+    if (res != CURLE_OK) {
+            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
+        } else {
+            // Affichage de la réponse
+            printf("Réponse de l'API :\n%s\n", chaine);
+            //const gchar *j = g_strdup(response);
+            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
+            // Création d'un widget de texte
+    
+   
+
+    
+            
+            
+            // Création d'un widget GtkTextView pour afficher le texte JSON brut
+    		GtkWidget *text_view = gtk_text_view_new();
+    		
+    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+   			// gtk_text_buffer_set_text(buffer, j , -1);
+   			 gtk_text_buffer_set_text(buffer, file_content, -1);
+   			 
+   			 
+   			 // Ajout du widget GtkTextView à la fenêtre
+   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+   			 gtk_container_add(GTK_CONTAINER(window20), scroll_window);
+        }
+
+        // Nettoyage
+       // free(response);
+       fclose(file);
+        curl_easy_cleanup(curl);
+    } else {
+        printf("Erreur lors de l'initialisation de cURL.\n");
+    }
+
+    curl_global_cleanup();
+    
+    
+    
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_add(GTK_CONTAINER(window20), vbox);
+	
+    gtk_widget_show_all(window20);
+    
+    freeList();
+    
+}
+
+void open_window19(GtkButton *button,gpointer user_data) {
+	GtkWidget *vbox;
+	CURL *curl;
+    CURLcode res;
+    //GtkWidget *box;
+   // GtkWidget *button1, *button2;
+    window19 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window19), "API5.3");
+    gtk_window_set_default_size(GTK_WINDOW(window19), 400, 400);
+    
+    const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
+    
+    
+    
+    
+    
+    while (List != NULL) {
+        chaine = g_strconcat(chaine, List->data, NULL);
+        List = List->next;
+    }
+    printf("\n");
+    
+    g_print("%s\n", chaine);
+    
+    curl = curl_easy_init();
+    
+	if(curl) {
+    	FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
+  		
+  		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		
+  		//gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		// Configuration de l'URL de l'API
+        curl_easy_setopt(curl, CURLOPT_URL, chaine);
+        
+        
+        
+        
+        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+  	
+  		
+    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
+    //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
+    //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
+    //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
+    //https://api.github.com/users/petrgazarov
+    
+    
+    	
+    
+    	// Lire le contenu du fichier
+   	const char* filename = "reponse.txt";
+    char* file_content = read_file(filename);
+    
+    
+
+	res = curl_easy_perform(curl);
+	
+    if (res != CURLE_OK) {
+            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
+        } else {
+            // Affichage de la réponse
+            printf("Réponse de l'API :\n%s\n", chaine);
+            //const gchar *j = g_strdup(response);
+            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
+            // Création d'un widget de texte
+    
+   
+
+    
+            
+            
+            // Création d'un widget GtkTextView pour afficher le texte JSON brut
+    		GtkWidget *text_view = gtk_text_view_new();
+    		
+    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+   			// gtk_text_buffer_set_text(buffer, j , -1);
+   			 gtk_text_buffer_set_text(buffer, file_content, -1);
+   			 
+   			 
+   			 // Ajout du widget GtkTextView à la fenêtre
+   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+   			 gtk_container_add(GTK_CONTAINER(window19), scroll_window);
+        }
+
+        // Nettoyage
+       // free(response);
+       fclose(file);
+        curl_easy_cleanup(curl);
+    } else {
+        printf("Erreur lors de l'initialisation de cURL.\n");
+    }
+
+    curl_global_cleanup();
+    
+    
+    
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_add(GTK_CONTAINER(window19), vbox);
+	
+    gtk_widget_show_all(window19);
+    
+    freeList();
+    
+}
+
+
+
+
+void open_window18(GtkButton *button,gpointer user_data) {
+	GtkWidget *vbox;
+	CURL *curl;
+    CURLcode res;
+    //GtkWidget *box;
+   // GtkWidget *button1, *button2;
+    window18 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window18), "API3.3");
+    gtk_window_set_default_size(GTK_WINDOW(window18), 400, 400);
+    
+    const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
+    
+    
+    
+    
+    
+    while (List != NULL) {
+        chaine = g_strconcat(chaine, List->data, NULL);
+        List = List->next;
+    }
+    printf("\n");
+    
+    g_print("%s\n", chaine);
+    
+    curl = curl_easy_init();
+    
+	if(curl) {
+    	FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
+  		
+  		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		
+  		//gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		// Configuration de l'URL de l'API
+        curl_easy_setopt(curl, CURLOPT_URL, chaine);
+        
+        
+        
+        
+        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+  	
+  		
+    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
+    //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
+    //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
+    //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
+    //https://api.github.com/users/petrgazarov
+    
+    
+    	
+    
+    	// Lire le contenu du fichier
+   	const char* filename = "reponse.txt";
+    char* file_content = read_file(filename);
+    
+    
+
+	res = curl_easy_perform(curl);
+	
+    if (res != CURLE_OK) {
+            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
+        } else {
+            // Affichage de la réponse
+            printf("Réponse de l'API :\n%s\n", chaine);
+            //const gchar *j = g_strdup(response);
+            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
+            // Création d'un widget de texte
+    
+   
+
+    
+            
+            
+            // Création d'un widget GtkTextView pour afficher le texte JSON brut
+    		GtkWidget *text_view = gtk_text_view_new();
+    		
+    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+   			// gtk_text_buffer_set_text(buffer, j , -1);
+   			 gtk_text_buffer_set_text(buffer, file_content, -1);
+   			 
+   			 
+   			 // Ajout du widget GtkTextView à la fenêtre
+   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+   			 gtk_container_add(GTK_CONTAINER(window18), scroll_window);
+        }
+
+        // Nettoyage
+       // free(response);
+       fclose(file);
+        curl_easy_cleanup(curl);
+    } else {
+        printf("Erreur lors de l'initialisation de cURL.\n");
+    }
+
+    curl_global_cleanup();
+    
+    
+    
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_add(GTK_CONTAINER(window18), vbox);
+	
+    gtk_widget_show_all(window18);
+    
+    freeList();
+    
+}
+
+
+
+void open_window17(GtkButton *button,gpointer user_data) {
+	GtkWidget *vbox;
+	CURL *curl;
+    CURLcode res;
+    //GtkWidget *box;
+   // GtkWidget *button1, *button2;
+    window17 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window17), "API4.3");
+    gtk_window_set_default_size(GTK_WINDOW(window17), 400, 400);
+    
+    const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
+    
+    
+    
+    
+    
+    while (List != NULL) {
+        chaine = g_strconcat(chaine, List->data, NULL);
+        List = List->next;
+    }
+    printf("\n");
+    
+    g_print("%s\n", chaine);
+    
+    curl = curl_easy_init();
+    
+	if(curl) {
+    	FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
+  		
+  		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		
+  		//gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		// Configuration de l'URL de l'API
+        curl_easy_setopt(curl, CURLOPT_URL, chaine);
+        
+        
+        
+        
+        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+  	
+  		
+    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
+    //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
+    //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
+    //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
+    //https://api.github.com/users/petrgazarov
+    
+    
+    	
+    
+    	// Lire le contenu du fichier
+   	const char* filename = "reponse.txt";
+    char* file_content = read_file(filename);
+    
+    
+
+	res = curl_easy_perform(curl);
+	
+    if (res != CURLE_OK) {
+            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
+        } else {
+            // Affichage de la réponse
+            printf("Réponse de l'API :\n%s\n", chaine);
+            //const gchar *j = g_strdup(response);
+            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
+            // Création d'un widget de texte
+    
+   
+
+    
+            
+            
+            // Création d'un widget GtkTextView pour afficher le texte JSON brut
+    		GtkWidget *text_view = gtk_text_view_new();
+    		
+    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+   			// gtk_text_buffer_set_text(buffer, j , -1);
+   			 gtk_text_buffer_set_text(buffer, file_content, -1);
+   			 
+   			 
+   			 // Ajout du widget GtkTextView à la fenêtre
+   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+   			 gtk_container_add(GTK_CONTAINER(window17), scroll_window);
+        }
+
+        // Nettoyage
+       // free(response);
+       fclose(file);
+        curl_easy_cleanup(curl);
+    } else {
+        printf("Erreur lors de l'initialisation de cURL.\n");
+    }
+
+    curl_global_cleanup();
+    
+    
+    
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_add(GTK_CONTAINER(window17), vbox);
+	
+    gtk_widget_show_all(window17);
+    
+    freeList();
+    
+}
+
+void open_window16(GtkButton *button,gpointer user_data) {
+	GtkWidget *vbox;
+	CURL *curl;
+    CURLcode res;
+    //GtkWidget *box;
+   // GtkWidget *button1, *button2;
+    window16 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window16), "API1.3");
+    gtk_window_set_default_size(GTK_WINDOW(window16), 400, 400);
+    
+    const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
+    
+    
+    
+    
+    
+    while (List != NULL) {
+        chaine = g_strconcat(chaine, List->data, NULL);
+        List = List->next;
+    }
+    printf("\n");
+    
+    g_print("%s\n", chaine);
+    
+    curl = curl_easy_init();
+    
+	if(curl) {
+    	FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
+  		
+  		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		
+  		//gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		// Configuration de l'URL de l'API
+        curl_easy_setopt(curl, CURLOPT_URL, chaine);
+        
+        
+        
+        
+        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+  	
+  		
+    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
+    //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
+    //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
+    //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
+    //https://api.github.com/users/petrgazarov
+    
+    
+    	
+    
+    	// Lire le contenu du fichier
+   	const char* filename = "reponse.txt";
+    char* file_content = read_file(filename);
+    
+    
+
+	res = curl_easy_perform(curl);
+	
+    if (res != CURLE_OK) {
+            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
+        } else {
+            // Affichage de la réponse
+            printf("Réponse de l'API :\n%s\n", chaine);
+            //const gchar *j = g_strdup(response);
+            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
+            // Création d'un widget de texte
+    
+   
+
+    
+            
+            
+            // Création d'un widget GtkTextView pour afficher le texte JSON brut
+    		GtkWidget *text_view = gtk_text_view_new();
+    		
+    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+   			// gtk_text_buffer_set_text(buffer, j , -1);
+   			 gtk_text_buffer_set_text(buffer, file_content, -1);
+   			 
+   			 
+   			 // Ajout du widget GtkTextView à la fenêtre
+   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+   			 gtk_container_add(GTK_CONTAINER(window16), scroll_window);
+        }
+
+        // Nettoyage
+       // free(response);
+       fclose(file);
+        curl_easy_cleanup(curl);
+    } else {
+        printf("Erreur lors de l'initialisation de cURL.\n");
+    }
+
+    curl_global_cleanup();
+    
+    
+    
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_add(GTK_CONTAINER(window16), vbox);
+	
+    gtk_widget_show_all(window16);
+    
+    freeList();
     
 }
 
@@ -142,7 +832,8 @@ void open_window15(GtkButton *button,gpointer user_data) {
     // Création du bouton
     button1 = gtk_button_new_with_label("Envoyer");
    	
-   
+   	const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
 	
     
     for(int i = 1; i<= global_result;i++){
@@ -157,12 +848,13 @@ void open_window15(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	//g_signal_connect(button1, "clicked", G_CALLBACK(NULL), window12);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_window20), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
     g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window15);
+    g_signal_connect(G_OBJECT(window15), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
 	gtk_container_add(GTK_CONTAINER(window15), vbox);	
@@ -190,7 +882,8 @@ void open_window14(GtkButton *button,gpointer user_data) {
     // Création du bouton
     button1 = gtk_button_new_with_label("Envoyer");
    	
-   
+   	const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
 	
     
     for(int i = 1; i<= global_result;i++){
@@ -205,12 +898,13 @@ void open_window14(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	//g_signal_connect(button1, "clicked", G_CALLBACK(NULL), window12);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_window19), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
     g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window14);
+    g_signal_connect(G_OBJECT(window14), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
 	gtk_container_add(GTK_CONTAINER(window14), vbox);	
@@ -238,7 +932,8 @@ void open_window13(GtkButton *button,gpointer user_data) {
     // Création du bouton
     button1 = gtk_button_new_with_label("Envoyer");
    	
-   
+   	const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
 	
     
     for(int i = 1; i<= global_result;i++){
@@ -253,12 +948,13 @@ void open_window13(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	//g_signal_connect(button1, "clicked", G_CALLBACK(NULL), window12);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_window17), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
     g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window13);
+    g_signal_connect(G_OBJECT(window13), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
 	gtk_container_add(GTK_CONTAINER(window13), vbox);	
@@ -287,7 +983,8 @@ void open_window12(GtkButton *button,gpointer user_data) {
     button1 = gtk_button_new_with_label("Envoyer");
    	
    
-	
+	const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
     
     for(int i = 1; i<= global_result;i++){
     	GtkWidget *entry = gtk_entry_new();
@@ -301,12 +998,13 @@ void open_window12(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	//g_signal_connect(button1, "clicked", G_CALLBACK(NULL), window12);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_window18), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
     g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window12);
+    g_signal_connect(G_OBJECT(window12), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
 	gtk_container_add(GTK_CONTAINER(window12), vbox);	
@@ -335,7 +1033,8 @@ void open_window11(GtkButton *button,gpointer user_data) {
     button1 = gtk_button_new_with_label("Envoyer");
    	
    
-	
+	const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
     
     for(int i = 1; i<= global_result;i++){
     	GtkWidget *entry = gtk_entry_new();
@@ -349,12 +1048,13 @@ void open_window11(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	//g_signal_connect(button1, "clicked", G_CALLBACK(NULL), window11);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_window16), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
     g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window11);
+    g_signal_connect(G_OBJECT(window11), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
 	gtk_container_add(GTK_CONTAINER(window11), vbox);	
@@ -383,7 +1083,8 @@ void open_window10(GtkButton *button,gpointer user_data) {
     button13 = gtk_button_new_with_label("Envoyer");
    	
    
-	
+	const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
     
     for(int i = 1; i<= global_result;i++){
     	GtkWidget *entry = gtk_entry_new();
@@ -397,12 +1098,13 @@ void open_window10(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box5), button13, TRUE, TRUE, 0);
-	//g_signal_connect(button13, "clicked", G_CALLBACK(NULL), window10);
+	g_signal_connect(button13, "clicked", G_CALLBACK(open_window21), (gpointer)chaine);
 	
 	// Création du bouton
 	button14 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box5), button14, TRUE, TRUE, 0);
     g_signal_connect(button14, "clicked", G_CALLBACK(close_window), window10);
+    g_signal_connect(G_OBJECT(window10), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
 	gtk_container_add(GTK_CONTAINER(window10), vbox10);	
