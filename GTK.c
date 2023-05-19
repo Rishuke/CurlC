@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <curl/curl.h>
+#include "cJSON.h"
 
 
 struct Liste{
@@ -142,16 +143,110 @@ void on_button_param(const gchar* tab, gpointer user_data) {
     
 }
 
-void open_window21(GtkButton *button,gpointer user_data) {
+void open_window21(){
 	GtkWidget *vbox;
-	CURL *curl;
-    CURLcode res;
-    //GtkWidget *box;
-   // GtkWidget *button1, *button2;
+	
     window21 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window21), "API2.3");
     gtk_window_set_default_size(GTK_WINDOW(window21), 400, 400);
     
+    FILE* file = fopen("response.txt", "r");
+    if (file == NULL) {
+        printf("Impossible d'ouvrir le fichier.\n");
+        //return 1;
+    }
+
+    // Lire le contenu du fichier dans une chaîne de caractères
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
+    char* file_content = (char*)malloc(file_size + 1);
+    fread(file_content, 1, file_size, file);
+    file_content[file_size] = '\0';
+    //printf("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%s\n",file_content);
+    
+    
+
+    // Analyser les données JSON
+    cJSON* json = cJSON_Parse(file_content);
+    if (json == NULL) {
+        printf("Erreur de parsing JSON.\n");
+        free(file_content);
+        fclose(file);
+        //return 1;
+    }
+
+    // Accéder à l'objet "results" contenant les données des recettes
+    cJSON* results = cJSON_GetObjectItem(json, "results");
+    if (results == NULL || !cJSON_IsArray(results)) {
+        printf("Erreur lors de l'accès aux résultats des recettes.\n");
+        cJSON_Delete(json);
+        free(file_content);
+        fclose(file);
+        //return 1;
+    }
+
+    // Parcourir les recettes et extraire les titres
+    cJSON* recipe;
+    cJSON_ArrayForEach(recipe, results) {
+        cJSON* title = cJSON_GetObjectItem(recipe, "title");
+        if (title != NULL && cJSON_IsString(title)) {
+            printf("Titre de recette : %s\n", title->valuestring);
+        }
+    }
+
+
+    // Nettoyage
+    cJSON_Delete(json);
+    free(file_content);
+    fclose(file);
+    
+    
+    
+	/*if (file != NULL) {
+		// Le fichier a été ouvert avec succès
+		
+		 
+    	// Lire le contenu du fichier
+	   	const char* filename = "./response.txt";
+		char* file_content = read_file(filename);
+    
+   		   
+            
+        // Création d'un widget GtkTextView pour afficher le texte JSON brut
+   		GtkWidget *text_view = gtk_text_view_new();
+    		
+   		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+ 	 	//gtk_text_buffer_set_text(buffer, j , -1);
+ 		gtk_text_buffer_set_text(buffer, file_content, -1);
+   			 
+   			 
+    	// Ajout du widget GtkTextView à la fenêtre
+    	GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    	gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+   	    gtk_container_add(GTK_CONTAINER(window21), scroll_window);
+   	    
+   	     
+		vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+		gtk_container_add(GTK_CONTAINER(window21), vbox);
+	
+   		 gtk_widget_show_all(window21);
+		
+		// Fermez le fichier lorsque vous avez terminé
+		fclose(file);
+		
+	} else {
+		// Le fichier n'a pas pu être ouvert, gérer l'erreur en conséquence
+		printf("Impossible d'ouvrir le fichier");
+	}*/
+    
+
+}
+
+void open_file1(GtkButton *button,gpointer user_data) {
+	
+    CURL *curl;
+    CURLcode res;
     const char *chaine = (const char *)user_data;
     g_print("%s\n", chaine);
     
@@ -175,16 +270,18 @@ void open_window21(GtkButton *button,gpointer user_data) {
   		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
   		
   		//gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		
   		// Configuration de l'URL de l'API
         curl_easy_setopt(curl, CURLOPT_URL, chaine);
         
         
-        
+        //const gchar *response = NULL;
         
         // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+       // curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
-        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+       // curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
   	
   		
     //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
@@ -195,12 +292,7 @@ void open_window21(GtkButton *button,gpointer user_data) {
     
     
     	
-    
-    	// Lire le contenu du fichier
-   	const char* filename = "reponse.txt";
-    char* file_content = read_file(filename);
-    
-    
+  
 
 	res = curl_easy_perform(curl);
 	
@@ -209,29 +301,29 @@ void open_window21(GtkButton *button,gpointer user_data) {
         } else {
             // Affichage de la réponse
             printf("Réponse de l'API :\n%s\n", chaine);
-            //const gchar *j = g_strdup(response);
+           // const gchar *j = g_strdup(response);
             printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
             // Création d'un widget de texte
     
    
 
     
-            
+            /*
             
             // Création d'un widget GtkTextView pour afficher le texte JSON brut
     		GtkWidget *text_view = gtk_text_view_new();
     		
     		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-   			// gtk_text_buffer_set_text(buffer, j , -1);
+   			 //gtk_text_buffer_set_text(buffer, j , -1);
    			 gtk_text_buffer_set_text(buffer, file_content, -1);
    			 
    			 
    			 // Ajout du widget GtkTextView à la fenêtre
    			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
     		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
-   			 gtk_container_add(GTK_CONTAINER(window21), scroll_window);
+   			 gtk_container_add(GTK_CONTAINER(window21), scroll_window);*/
         }
-
+		
         // Nettoyage
        // free(response);
        fclose(file);
@@ -243,13 +335,15 @@ void open_window21(GtkButton *button,gpointer user_data) {
     curl_global_cleanup();
     
     
-    
+    /*
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_container_add(GTK_CONTAINER(window21), vbox);
 	
-    gtk_widget_show_all(window21);
+    gtk_widget_show_all(window21);*/
     
     freeList();
+    
+    open_window21();
     
 }
 
@@ -1098,7 +1192,8 @@ void open_window10(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box5), button13, TRUE, TRUE, 0);
-	g_signal_connect(button13, "clicked", G_CALLBACK(open_window21), (gpointer)chaine);
+	g_signal_connect(button13, "clicked", G_CALLBACK(open_file1), (gpointer)chaine);
+	
 	
 	// Création du bouton
 	button14 =  gtk_button_new_with_label("Fermer");

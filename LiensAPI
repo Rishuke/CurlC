@@ -16,3 +16,25 @@ https://api.spoonacular.com/recipes/findByIngredients?ingredients=apples,+flour,
 
 
 https://api.spoonacular.com/recipes/complexSearch?query=pasta&maxFat=25&number=2
+
+
+_________________________________________________________________________________________________________________________________________________________
+
+Pour 0 parametre(ComplexSearch): https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed
+Pour 3 parametres:(ComplexSearch); https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed&maxFat=25&number=2&query=pasta
+
+Pour 3 parametres(FindByNutrients): https://api.spoonacular.com/recipes/findByNutrients?apiKey=759b7e6c793c4ec8bff63b4940a952ed&number=2&maxCarbs=50&minCarbs=10
+
+Pour 2 parametres(FindByIngredients): https://api.spoonacular.com/recipes/findByIngredients?apiKey=759b7e6c793c4ec8bff63b4940a952ed&number=2&ingredients=apples,+flour,+sugar
+
+Pour 4 parametres(Search): https://api.spoonacular.com/food/ingredients/search?apiKey=759b7e6c793c4ec8bff63b4940a952ed&sortDirection=desc&sort=calories&number=2&query=banana
+
+Pour 2 parametres(Autocomplete): https://api.spoonacular.com/food/ingredients/autocomplete?apiKey=759b7e6c793c4ec8bff63b4940a952ed&number=5&query=apple
+
+Pour 1 parametre(Substitutes): https://api.spoonacular.com/food/ingredients/substitutes?apiKey=759b7e6c793c4ec8bff63b4940a952ed&ingredientName=butter
+
+
+
+
+
+
