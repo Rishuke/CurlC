@@ -143,104 +143,90 @@ void on_button_param(const gchar* tab, gpointer user_data) {
     
 }
 
-void open_window21(){
-	GtkWidget *vbox;
-	
+
+
+void open_window21() {
+    GtkWidget *window21, *text_view, *scroll_window;
+    GtkTextBuffer *buffer;
+    gchar *result;
+    FILE *file;
+    char *file_content;
+    long file_size;
+    cJSON *json, *results, *recipe, *title;
+
+    // Création de la fenêtre GTK
+    gtk_init(NULL, NULL);
     window21 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window21), "API2.3");
     gtk_window_set_default_size(GTK_WINDOW(window21), 400, 400);
-    
-    FILE* file = fopen("response.txt", "r");
+    g_signal_connect(window21, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Ouverture et lecture du fichier JSON
+    file = fopen("response.txt", "r");
     if (file == NULL) {
         printf("Impossible d'ouvrir le fichier.\n");
-        //return 1;
+        return;
     }
-
-    // Lire le contenu du fichier dans une chaîne de caractères
+    
     fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
+    file_size = ftell(file);
     rewind(file);
-    char* file_content = (char*)malloc(file_size + 1);
+    file_content = (char *)malloc(file_size + 1);
     fread(file_content, 1, file_size, file);
     file_content[file_size] = '\0';
-    //printf("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%s\n",file_content);
-    
-    
-
-    // Analyser les données JSON
-    cJSON* json = cJSON_Parse(file_content);
+	printf("%s\n",file_content);
+	
+	
+    // Parsing du JSON
+    json = cJSON_Parse(file_content);
     if (json == NULL) {
         printf("Erreur de parsing JSON.\n");
         free(file_content);
         fclose(file);
-        //return 1;
+        return;
     }
 
-    // Accéder à l'objet "results" contenant les données des recettes
-    cJSON* results = cJSON_GetObjectItem(json, "results");
+    // Accès aux résultats des recettes
+    results = cJSON_GetObjectItem(json, "results");
     if (results == NULL || !cJSON_IsArray(results)) {
         printf("Erreur lors de l'accès aux résultats des recettes.\n");
         cJSON_Delete(json);
         free(file_content);
         fclose(file);
-        //return 1;
+        return;
     }
 
-    // Parcourir les recettes et extraire les titres
-    cJSON* recipe;
+    // Concaténation des titres de recettes
+    const gchar* str1 = "Titre de recette : ";
+    result = g_strdup("");
     cJSON_ArrayForEach(recipe, results) {
-        cJSON* title = cJSON_GetObjectItem(recipe, "title");
+        title = cJSON_GetObjectItem(recipe, "title");
         if (title != NULL && cJSON_IsString(title)) {
-            printf("Titre de recette : %s\n", title->valuestring);
+            result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
         }
     }
 
+    // Création du widget GtkTextView pour afficher les titres
+    text_view = gtk_text_view_new();
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+    gtk_text_buffer_set_text(buffer, result, -1);
+
+    // Création de la fenêtre de défilement pour le widget GtkTextView
+    scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+
+    // Ajout du widget GtkTextView à la fenêtre
+    gtk_container_add(GTK_CONTAINER(window21), scroll_window);
+
+    // Affichage de la fenêtre et démarrage de la boucle principale GTK
+    gtk_widget_show_all(window21);
+    gtk_main();
 
     // Nettoyage
+    g_free(result);
     cJSON_Delete(json);
-    free(file_content);
+   free(file_content);
     fclose(file);
-    
-    
-    
-	/*if (file != NULL) {
-		// Le fichier a été ouvert avec succès
-		
-		 
-    	// Lire le contenu du fichier
-	   	const char* filename = "./response.txt";
-		char* file_content = read_file(filename);
-    
-   		   
-            
-        // Création d'un widget GtkTextView pour afficher le texte JSON brut
-   		GtkWidget *text_view = gtk_text_view_new();
-    		
-   		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
- 	 	//gtk_text_buffer_set_text(buffer, j , -1);
- 		gtk_text_buffer_set_text(buffer, file_content, -1);
-   			 
-   			 
-    	// Ajout du widget GtkTextView à la fenêtre
-    	GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
-    	gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
-   	    gtk_container_add(GTK_CONTAINER(window21), scroll_window);
-   	    
-   	     
-		vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-		gtk_container_add(GTK_CONTAINER(window21), vbox);
-	
-   		 gtk_widget_show_all(window21);
-		
-		// Fermez le fichier lorsque vous avez terminé
-		fclose(file);
-		
-	} else {
-		// Le fichier n'a pas pu être ouvert, gérer l'erreur en conséquence
-		printf("Impossible d'ouvrir le fichier");
-	}*/
-    
-
 }
 
 void open_file1(GtkButton *button,gpointer user_data) {
@@ -347,15 +333,99 @@ void open_file1(GtkButton *button,gpointer user_data) {
     
 }
 
-void open_window20(GtkButton *button,gpointer user_data) {
-	GtkWidget *vbox;
-	CURL *curl;
-    CURLcode res;
-    //GtkWidget *box;
-   // GtkWidget *button1, *button2;
+void open_window20() {
+	GtkWidget *window20, *text_view, *scroll_window;
+    GtkTextBuffer *buffer;
+    gchar *result;
+    FILE *file;
+    char *file_content;
+    long file_size;
+    cJSON *json, *results, *recipe, *title;
+
+    // Création de la fenêtre GTK
+    gtk_init(NULL, NULL);
     window20 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window20), "API6.3");
     gtk_window_set_default_size(GTK_WINDOW(window20), 400, 400);
+    g_signal_connect(window20, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Ouverture et lecture du fichier JSON
+    file = fopen("response.txt", "r");
+    if (file == NULL) {
+        printf("Impossible d'ouvrir le fichier.\n");
+        return;
+    }
+    
+    fseek(file, 0, SEEK_END);
+    file_size = ftell(file);
+    rewind(file);
+    file_content = (char *)malloc(file_size + 1);
+    fread(file_content, 1, file_size, file);
+    file_content[file_size] = '\0';
+	printf("%s\n",file_content);
+	
+	
+    // Parsing du JSON
+    json = cJSON_Parse(file_content);
+    if (json == NULL) {
+        printf("Erreur de parsing JSON.\n");
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Accès aux résultats des recettes
+    results = cJSON_GetObjectItem(json, "results");
+    if (results == NULL || !cJSON_IsArray(results)) {
+        printf("Erreur lors de l'accès aux résultats des recettes.\n");
+        cJSON_Delete(json);
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Concaténation des titres de recettes
+    const gchar* str1 = "Titre de recette : ";
+    result = g_strdup("");
+    cJSON_ArrayForEach(recipe, results) {
+        title = cJSON_GetObjectItem(recipe, "title");
+        if (title != NULL && cJSON_IsString(title)) {
+            result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+        }
+    }
+
+    // Création du widget GtkTextView pour afficher les titres
+    text_view = gtk_text_view_new();
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+    gtk_text_buffer_set_text(buffer, result, -1);
+
+    // Création de la fenêtre de défilement pour le widget GtkTextView
+    scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+
+    // Ajout du widget GtkTextView à la fenêtre
+    gtk_container_add(GTK_CONTAINER(window20), scroll_window);
+
+    // Affichage de la fenêtre et démarrage de la boucle principale GTK
+    gtk_widget_show_all(window20);
+    gtk_main();
+
+    // Nettoyage
+    g_free(result);
+    cJSON_Delete(json);
+   free(file_content);
+    fclose(file);
+}
+
+
+
+
+void open_file3(GtkButton *button,gpointer user_data) {
+	
+	CURL *curl;
+    CURLcode res;
+    
+    
     
     const char *chaine = (const char *)user_data;
     g_print("%s\n", chaine);
@@ -401,10 +471,7 @@ void open_window20(GtkButton *button,gpointer user_data) {
     
     	
     
-    	// Lire le contenu du fichier
-   	const char* filename = "reponse.txt";
-    char* file_content = read_file(filename);
-    
+    	
     
 
 	res = curl_easy_perform(curl);
@@ -417,24 +484,7 @@ void open_window20(GtkButton *button,gpointer user_data) {
             //const gchar *j = g_strdup(response);
             printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
             // Création d'un widget de texte
-    
-   
-
-    
             
-            
-            // Création d'un widget GtkTextView pour afficher le texte JSON brut
-    		GtkWidget *text_view = gtk_text_view_new();
-    		
-    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-   			// gtk_text_buffer_set_text(buffer, j , -1);
-   			 gtk_text_buffer_set_text(buffer, file_content, -1);
-   			 
-   			 
-   			 // Ajout du widget GtkTextView à la fenêtre
-   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
-    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
-   			 gtk_container_add(GTK_CONTAINER(window20), scroll_window);
         }
 
         // Nettoyage
@@ -449,24 +499,104 @@ void open_window20(GtkButton *button,gpointer user_data) {
     
     
     
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window20), vbox);
 	
-    gtk_widget_show_all(window20);
     
     freeList();
     
+    open_window20();
+    
 }
 
-void open_window19(GtkButton *button,gpointer user_data) {
-	GtkWidget *vbox;
-	CURL *curl;
-    CURLcode res;
-    //GtkWidget *box;
-   // GtkWidget *button1, *button2;
+void open_window19() {
+	GtkWidget *window19, *text_view, *scroll_window;
+    GtkTextBuffer *buffer;
+    gchar *result;
+    FILE *file;
+    char *file_content;
+    long file_size;
+    cJSON *json, *results, *recipe, *title;
+
+    // Création de la fenêtre GTK
+    gtk_init(NULL, NULL);
     window19 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window19), "API5.3");
     gtk_window_set_default_size(GTK_WINDOW(window19), 400, 400);
+    g_signal_connect(window19, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Ouverture et lecture du fichier JSON
+    file = fopen("response.txt", "r");
+    if (file == NULL) {
+        printf("Impossible d'ouvrir le fichier.\n");
+        return;
+    }
+    
+    fseek(file, 0, SEEK_END);
+    file_size = ftell(file);
+    rewind(file);
+    file_content = (char *)malloc(file_size + 1);
+    fread(file_content, 1, file_size, file);
+    file_content[file_size] = '\0';
+	printf("%s\n",file_content);
+	
+	
+    // Parsing du JSON
+    json = cJSON_Parse(file_content);
+    if (json == NULL) {
+        printf("Erreur de parsing JSON.\n");
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Accès aux résultats des recettes
+    results = cJSON_GetObjectItem(json, "results");
+    if (results == NULL || !cJSON_IsArray(results)) {
+        printf("Erreur lors de l'accès aux résultats des recettes.\n");
+        cJSON_Delete(json);
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Concaténation des titres de recettes
+    const gchar* str1 = "Titre de recette : ";
+    result = g_strdup("");
+    cJSON_ArrayForEach(recipe, results) {
+        title = cJSON_GetObjectItem(recipe, "ingredient");
+        if (title != NULL && cJSON_IsString(title)) {
+            result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+        }
+    }
+
+    // Création du widget GtkTextView pour afficher les titres
+    text_view = gtk_text_view_new();
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+    gtk_text_buffer_set_text(buffer, result, -1);
+
+    // Création de la fenêtre de défilement pour le widget GtkTextView
+    scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+
+    // Ajout du widget GtkTextView à la fenêtre
+    gtk_container_add(GTK_CONTAINER(window19), scroll_window);
+
+    // Affichage de la fenêtre et démarrage de la boucle principale GTK
+    gtk_widget_show_all(window19);
+    gtk_main();
+
+    // Nettoyage
+    g_free(result);
+    cJSON_Delete(json);
+   free(file_content);
+    fclose(file);
+}
+
+
+void open_file6(GtkButton *button,gpointer user_data) {
+	
+	CURL *curl;
+    CURLcode res;
+    
     
     const char *chaine = (const char *)user_data;
     g_print("%s\n", chaine);
@@ -512,10 +642,6 @@ void open_window19(GtkButton *button,gpointer user_data) {
     
     	
     
-    	// Lire le contenu du fichier
-   	const char* filename = "reponse.txt";
-    char* file_content = read_file(filename);
-    
     
 
 	res = curl_easy_perform(curl);
@@ -533,19 +659,7 @@ void open_window19(GtkButton *button,gpointer user_data) {
 
     
             
-            
-            // Création d'un widget GtkTextView pour afficher le texte JSON brut
-    		GtkWidget *text_view = gtk_text_view_new();
-    		
-    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-   			// gtk_text_buffer_set_text(buffer, j , -1);
-   			 gtk_text_buffer_set_text(buffer, file_content, -1);
-   			 
-   			 
-   			 // Ajout du widget GtkTextView à la fenêtre
-   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
-    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
-   			 gtk_container_add(GTK_CONTAINER(window19), scroll_window);
+         
         }
 
         // Nettoyage
@@ -560,27 +674,104 @@ void open_window19(GtkButton *button,gpointer user_data) {
     
     
     
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window19), vbox);
-	
-    gtk_widget_show_all(window19);
     
     freeList();
     
+    open_window19();
 }
 
+void open_window18() {
+	GtkWidget *window18, *text_view, *scroll_window;
+    GtkTextBuffer *buffer;
+    gchar *result;
+    FILE *file;
+    char *file_content;
+    long file_size;
+    cJSON *json, *results, *recipe, *title;
 
-
-
-void open_window18(GtkButton *button,gpointer user_data) {
-	GtkWidget *vbox;
-	CURL *curl;
-    CURLcode res;
-    //GtkWidget *box;
-   // GtkWidget *button1, *button2;
+    // Création de la fenêtre GTK
+    gtk_init(NULL, NULL);
     window18 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window18), "API3.3");
     gtk_window_set_default_size(GTK_WINDOW(window18), 400, 400);
+    g_signal_connect(window18, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Ouverture et lecture du fichier JSON
+    file = fopen("response.txt", "r");
+    if (file == NULL) {
+        printf("Impossible d'ouvrir le fichier.\n");
+        return;
+    }
+    
+    fseek(file, 0, SEEK_END);
+    file_size = ftell(file);
+    rewind(file);
+    file_content = (char *)malloc(file_size + 1);
+    fread(file_content, 1, file_size, file);
+    file_content[file_size] = '\0';
+	printf("%s\n",file_content);
+	
+	
+    // Parsing du JSON
+    json = cJSON_Parse(file_content);
+    if (json == NULL) {
+        printf("Erreur de parsing JSON.\n");
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Accès aux résultats des recettes
+    results = cJSON_GetObjectItem(json, "results");
+    if (results == NULL || !cJSON_IsArray(results)) {
+        printf("Erreur lors de l'accès aux résultats des recettes.\n");
+        cJSON_Delete(json);
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Concaténation des titres de recettes
+    const gchar* str1 = "nom de recette : ";
+    result = g_strdup("");
+    cJSON_ArrayForEach(recipe, results) {
+        title = cJSON_GetObjectItem(recipe, "name");
+        if (title != NULL && cJSON_IsString(title)) {
+            result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+        }
+    }
+
+    // Création du widget GtkTextView pour afficher les titres
+    text_view = gtk_text_view_new();
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+    gtk_text_buffer_set_text(buffer, result, -1);
+
+    // Création de la fenêtre de défilement pour le widget GtkTextView
+    scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+
+    // Ajout du widget GtkTextView à la fenêtre
+    gtk_container_add(GTK_CONTAINER(window18), scroll_window);
+
+    // Affichage de la fenêtre et démarrage de la boucle principale GTK
+    gtk_widget_show_all(window18);
+    gtk_main();
+
+    // Nettoyage
+    g_free(result);
+    cJSON_Delete(json);
+   free(file_content);
+    fclose(file);
+    
+}
+
+
+void open_file5(GtkButton *button,gpointer user_data) {
+	
+	CURL *curl;
+    CURLcode res;
+   
+    
     
     const char *chaine = (const char *)user_data;
     g_print("%s\n", chaine);
@@ -626,9 +817,7 @@ void open_window18(GtkButton *button,gpointer user_data) {
     
     	
     
-    	// Lire le contenu du fichier
-   	const char* filename = "reponse.txt";
-    char* file_content = read_file(filename);
+    	
     
     
 
@@ -648,18 +837,7 @@ void open_window18(GtkButton *button,gpointer user_data) {
     
             
             
-            // Création d'un widget GtkTextView pour afficher le texte JSON brut
-    		GtkWidget *text_view = gtk_text_view_new();
-    		
-    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-   			// gtk_text_buffer_set_text(buffer, j , -1);
-   			 gtk_text_buffer_set_text(buffer, file_content, -1);
-   			 
-   			 
-   			 // Ajout du widget GtkTextView à la fenêtre
-   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
-    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
-   			 gtk_container_add(GTK_CONTAINER(window18), scroll_window);
+         
         }
 
         // Nettoyage
@@ -673,138 +851,104 @@ void open_window18(GtkButton *button,gpointer user_data) {
     curl_global_cleanup();
     
     
-    
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window18), vbox);
-	
-    gtk_widget_show_all(window18);
+   
     
     freeList();
-    
+    open_window18();
 }
 
-
-
-void open_window17(GtkButton *button,gpointer user_data) {
-	GtkWidget *vbox;
-	CURL *curl;
-    CURLcode res;
-    //GtkWidget *box;
-   // GtkWidget *button1, *button2;
+void open_window17() {
+	GtkWidget *window17, *text_view, *scroll_window;
+    GtkTextBuffer *buffer;
+    gchar *result;
+    FILE *file;
+    char *file_content;
+    long file_size;
+    cJSON *json, *results, *recipe, *title;
+    
+    // Création de la fenêtre GTK
+    gtk_init(NULL, NULL);
     window17 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window17), "API4.3");
     gtk_window_set_default_size(GTK_WINDOW(window17), 400, 400);
-    
-    const char *chaine = (const char *)user_data;
-    g_print("%s\n", chaine);
-    
-    
-    
-    
-    
-    while (List != NULL) {
-        chaine = g_strconcat(chaine, List->data, NULL);
-        List = List->next;
+     g_signal_connect(window17, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Ouverture et lecture du fichier JSON
+    file = fopen("response.txt", "r");
+    if (file == NULL) {
+        printf("Impossible d'ouvrir le fichier.\n");
+        return;
     }
-    printf("\n");
     
-    g_print("%s\n", chaine);
-    
-    curl = curl_easy_init();
-    
-	if(curl) {
-    	FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
-  		
-  		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
-  		
-  		//gchar *result = g_strdup_printf("%s%s", json_text, param);
-  		// Configuration de l'URL de l'API
-        curl_easy_setopt(curl, CURLOPT_URL, chaine);
-        
-        
-        
-        
-        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
-        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-  	
-  		
-    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
-    //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
-    //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
-    //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
-    //https://api.github.com/users/petrgazarov
-    
-    
-    	
-    
-    	// Lire le contenu du fichier
-   	const char* filename = "reponse.txt";
-    char* file_content = read_file(filename);
-    
-    
-
-	res = curl_easy_perform(curl);
+    fseek(file, 0, SEEK_END);
+    file_size = ftell(file);
+    rewind(file);
+    file_content = (char *)malloc(file_size + 1);
+    fread(file_content, 1, file_size, file);
+    file_content[file_size] = '\0';
+	printf("%s\n",file_content);
 	
-    if (res != CURLE_OK) {
-            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
-        } else {
-            // Affichage de la réponse
-            printf("Réponse de l'API :\n%s\n", chaine);
-            //const gchar *j = g_strdup(response);
-            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
-            // Création d'un widget de texte
-    
-   
+	
+    // Parsing du JSON
+    json = cJSON_Parse(file_content);
+    if (json == NULL) {
+        printf("Erreur de parsing JSON.\n");
+        free(file_content);
+        fclose(file);
+        return;
+    }
 
-    
-            
-            
-            // Création d'un widget GtkTextView pour afficher le texte JSON brut
-    		GtkWidget *text_view = gtk_text_view_new();
-    		
-    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-   			// gtk_text_buffer_set_text(buffer, j , -1);
-   			 gtk_text_buffer_set_text(buffer, file_content, -1);
-   			 
-   			 
-   			 // Ajout du widget GtkTextView à la fenêtre
-   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
-    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
-   			 gtk_container_add(GTK_CONTAINER(window17), scroll_window);
+    // Accès aux résultats des recettes
+    results = cJSON_GetObjectItem(json, "results");
+   if (results == NULL || !cJSON_IsArray(results)) {
+        printf("Erreur lors de l'accès aux résultats des recettes.\n");
+        cJSON_Delete(json);
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Concaténation des titres de recettes
+    const gchar* str1 = "Titre de recette : ";
+    result = g_strdup("");
+    cJSON_ArrayForEach(recipe, results) {
+        title = cJSON_GetObjectItem(recipe, "title");
+        if (title != NULL && cJSON_IsString(title)) {
+            result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
         }
-
-        // Nettoyage
-       // free(response);
-       fclose(file);
-        curl_easy_cleanup(curl);
-    } else {
-        printf("Erreur lors de l'initialisation de cURL.\n");
     }
 
-    curl_global_cleanup();
-    
-    
-    
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window17), vbox);
-	
+    // Création du widget GtkTextView pour afficher les titres
+    text_view = gtk_text_view_new();
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+    gtk_text_buffer_set_text(buffer, result, -1);
+
+    // Création de la fenêtre de défilement pour le widget GtkTextView
+    scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+
+    // Ajout du widget GtkTextView à la fenêtre
+    gtk_container_add(GTK_CONTAINER(window17), scroll_window);
+
+    // Affichage de la fenêtre et démarrage de la boucle principale GTK
     gtk_widget_show_all(window17);
-    
-    freeList();
+    gtk_main();
+
+    // Nettoyage
+    g_free(result);
+    cJSON_Delete(json);
+   free(file_content);
+    fclose(file);
+
     
 }
 
-void open_window16(GtkButton *button,gpointer user_data) {
-	GtkWidget *vbox;
+void open_file2(GtkButton *button,gpointer user_data) {
+	
 	CURL *curl;
     CURLcode res;
-    //GtkWidget *box;
-   // GtkWidget *button1, *button2;
-    window16 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window16), "API1.3");
-    gtk_window_set_default_size(GTK_WINDOW(window16), 400, 400);
+    
+   
     
     const char *chaine = (const char *)user_data;
     g_print("%s\n", chaine);
@@ -850,9 +994,7 @@ void open_window16(GtkButton *button,gpointer user_data) {
     
     	
     
-    	// Lire le contenu du fichier
-   	const char* filename = "reponse.txt";
-    char* file_content = read_file(filename);
+ 
     
     
 
@@ -872,18 +1014,6 @@ void open_window16(GtkButton *button,gpointer user_data) {
     
             
             
-            // Création d'un widget GtkTextView pour afficher le texte JSON brut
-    		GtkWidget *text_view = gtk_text_view_new();
-    		
-    		GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-   			// gtk_text_buffer_set_text(buffer, j , -1);
-   			 gtk_text_buffer_set_text(buffer, file_content, -1);
-   			 
-   			 
-   			 // Ajout du widget GtkTextView à la fenêtre
-   			 GtkWidget *scroll_window = gtk_scrolled_window_new(NULL, NULL);
-    		gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
-   			 gtk_container_add(GTK_CONTAINER(window16), scroll_window);
         }
 
         // Nettoyage
@@ -898,13 +1028,184 @@ void open_window16(GtkButton *button,gpointer user_data) {
     
     
     
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window16), vbox);
 	
+    
+    freeList();
+    open_window17();
+}
+
+void open_window16() {
+	GtkWidget *window16, *text_view, *scroll_window;
+    GtkTextBuffer *buffer;
+    gchar *result;
+    FILE *file;
+    char *file_content;
+    long file_size;
+    cJSON *json, *results, *recipe, *title;
+
+    // Création de la fenêtre GTK
+    gtk_init(NULL, NULL);
+    window16 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window16), "API1.3");
+    gtk_window_set_default_size(GTK_WINDOW(window16), 400, 400);
+    g_signal_connect(window16, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+    // Ouverture et lecture du fichier JSON
+    file = fopen("response.txt", "r");
+    if (file == NULL) {
+        printf("Impossible d'ouvrir le fichier.\n");
+        return;
+    }
+    
+    fseek(file, 0, SEEK_END);
+    file_size = ftell(file);
+    rewind(file);
+    file_content = (char *)malloc(file_size + 1);
+    fread(file_content, 1, file_size, file);
+    file_content[file_size] = '\0';
+	printf("%s\n",file_content);
+	
+	
+    // Parsing du JSON
+    json = cJSON_Parse(file_content);
+    if (json == NULL) {
+        printf("Erreur de parsing JSON.\n");
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Accès aux résultats des recettes
+    results = cJSON_GetObjectItem(json, "results");
+    if (results == NULL || !cJSON_IsArray(results)) {
+        printf("Erreur lors de l'accès aux résultats des recettes.\n");
+        cJSON_Delete(json);
+        free(file_content);
+        fclose(file);
+        return;
+    }
+
+    // Concaténation des titres de recettes
+    const gchar* str1 = "Nom de recette : ";
+    result = g_strdup("");
+    cJSON_ArrayForEach(recipe, results) {
+        title = cJSON_GetObjectItem(recipe, "name");
+        if (title != NULL && cJSON_IsString(title)) {
+            result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+        }
+    }
+
+    // Création du widget GtkTextView pour afficher les titres
+    text_view = gtk_text_view_new();
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+    gtk_text_buffer_set_text(buffer, result, -1);
+
+    // Création de la fenêtre de défilement pour le widget GtkTextView
+    scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
+
+    // Ajout du widget GtkTextView à la fenêtre
+    gtk_container_add(GTK_CONTAINER(window16), scroll_window);
+
+    // Affichage de la fenêtre et démarrage de la boucle principale GTK
     gtk_widget_show_all(window16);
+    gtk_main();
+
+    // Nettoyage
+    g_free(result);
+    cJSON_Delete(json);
+   free(file_content);
+    fclose(file);
+}
+
+void open_file4(GtkButton *button,gpointer user_data) {
+	
+	CURL *curl;
+    CURLcode res;
+    
+   
+    
+    const char *chaine = (const char *)user_data;
+    g_print("%s\n", chaine);
+    
+    
+    
+    
+    
+    while (List != NULL) {
+        chaine = g_strconcat(chaine, List->data, NULL);
+        List = List->next;
+    }
+    printf("\n");
+    
+    g_print("%s\n", chaine);
+    
+    curl = curl_easy_init();
+    
+	if(curl) {
+    	FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
+  		
+  		//const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		
+  		//gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		// Configuration de l'URL de l'API
+        curl_easy_setopt(curl, CURLOPT_URL, chaine);
+        
+        
+        
+        
+        // Configuration de la fonction de rappel pour écrire la réponse dans une chaîne
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback2);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+        //curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+  	
+  		
+    //https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed&includeNutrition=true
+    //https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
+    //"jdbc:mysql://localhost:3306/Meal?user=admin&password=password"
+    //https://pokebuildapi.fr/api/v1/pokemon/type/Eau
+    //https://api.github.com/users/petrgazarov
+    
+    
+    	
+ 
+    
+
+	res = curl_easy_perform(curl);
+	
+    if (res != CURLE_OK) {
+            printf("Erreur lors de l'exécution de la requête : %s\n", curl_easy_strerror(res));
+        } else {
+            // Affichage de la réponse
+            printf("Réponse de l'API :\n%s\n", chaine);
+            //const gchar *j = g_strdup(response);
+            printf("Réponse de l'API a été enregistrée dans le fichier response.txt.\n");
+            // Création d'un widget de texte
+    
+   
+
+    
+            
+            
+            
+        }
+
+        // Nettoyage
+       // free(response);
+       fclose(file);
+        curl_easy_cleanup(curl);
+    } else {
+        printf("Erreur lors de l'initialisation de cURL.\n");
+    }
+
+    curl_global_cleanup();
+    
+    
+  
     
     freeList();
     
+    open_window16();
 }
 
 void open_window15(GtkButton *button,gpointer user_data) {
@@ -942,7 +1243,7 @@ void open_window15(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	g_signal_connect(button1, "clicked", G_CALLBACK(open_window20), (gpointer)chaine);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_file3), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
@@ -992,7 +1293,7 @@ void open_window14(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	g_signal_connect(button1, "clicked", G_CALLBACK(open_window19), (gpointer)chaine);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_file6), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
@@ -1042,7 +1343,7 @@ void open_window13(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	g_signal_connect(button1, "clicked", G_CALLBACK(open_window17), (gpointer)chaine);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_file2), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
@@ -1092,7 +1393,7 @@ void open_window12(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	g_signal_connect(button1, "clicked", G_CALLBACK(open_window18), (gpointer)chaine);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_file5), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
@@ -1142,7 +1443,7 @@ void open_window11(GtkButton *button,gpointer user_data) {
    	}
    	
    	gtk_box_pack_start(GTK_BOX(box), button1, TRUE, TRUE, 0);
-	g_signal_connect(button1, "clicked", G_CALLBACK(open_window16), (gpointer)chaine);
+	g_signal_connect(button1, "clicked", G_CALLBACK(open_file4), (gpointer)chaine);
 	
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
@@ -1370,7 +1671,7 @@ void open_window7(GtkButton *button,gpointer user_data) {
 void open_window6(GtkButton *button,gpointer user_data) {
 	GtkWidget *vbox;
     window6 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window4), "API3");
+    gtk_window_set_title(GTK_WINDOW(window6), "API3");
     gtk_window_set_default_size(GTK_WINDOW(window6), 400, 400);
     g_signal_connect(window6, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     GtkWidget *box;

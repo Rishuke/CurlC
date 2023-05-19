@@ -8,4 +8,5 @@ CODE DE COMPILATION pour le graphique: gcc -Wall -o Graphique Graphique.c `pkg-c
 CODE DE COMPILATION pour le programme Brouillon en c: gcc -Wall -o Brouillon Brouillon.c `pkg-config --cflags --libs gtk+-3.0` 
 
 
-CODE DE COMPILATION pour le gtk: gcc -Wall -o GTK GTK.c `pkg-config --cflags --libs gtk+-3.0` -lcurl
+CODE DE COMPILATION pour le gtk: gcc -Wall -o GTK GTK.c cJSON.c `pkg-config --cflags --libs gtk+-3.0` -lcurl -lm
+
