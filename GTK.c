@@ -161,7 +161,7 @@ void open_window21() {
     gtk_window_set_default_size(GTK_WINDOW(window21), 400, 400);
     g_signal_connect(window21, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-    // Ouverture et lecture du fichier JSON
+     // Ouverture et lecture du fichier JSON
     file = fopen("response.txt", "r");
     if (file == NULL) {
         printf("Impossible d'ouvrir le fichier.\n");
@@ -177,6 +177,7 @@ void open_window21() {
 	printf("%s\n",file_content);
 	
 	
+	
     // Parsing du JSON
     json = cJSON_Parse(file_content);
     if (json == NULL) {
@@ -186,15 +187,16 @@ void open_window21() {
         return;
     }
 
-    // Accès aux résultats des recettes
+   // Accès aux résultats des recettes
     results = cJSON_GetObjectItem(json, "results");
-    if (results == NULL || !cJSON_IsArray(results)) {
+   if (results == NULL || !cJSON_IsArray(results)) {
         printf("Erreur lors de l'accès aux résultats des recettes.\n");
         cJSON_Delete(json);
         free(file_content);
         fclose(file);
         return;
     }
+  
 
     // Concaténation des titres de recettes
     const gchar* str1 = "Titre de recette : ";
@@ -514,8 +516,8 @@ void open_window19() {
     FILE *file;
     char *file_content;
     long file_size;
-    cJSON *json, *results, *recipe, *title;
-
+    cJSON *json, *title, *param;
+	
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
     window19 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -548,7 +550,7 @@ void open_window19() {
         return;
     }
 
-    // Accès aux résultats des recettes
+   /* // Accès aux résultats des recettes
     results = cJSON_GetObjectItem(json, "results");
     if (results == NULL || !cJSON_IsArray(results)) {
         printf("Erreur lors de l'accès aux résultats des recettes.\n");
@@ -557,17 +559,75 @@ void open_window19() {
         fclose(file);
         return;
     }
-
+*/
     // Concaténation des titres de recettes
-    const gchar* str1 = "Titre de recette : ";
+    const gchar* str1 = "nom d'ingredient : ";
     result = g_strdup("");
-    cJSON_ArrayForEach(recipe, results) {
-        title = cJSON_GetObjectItem(recipe, "ingredient");
-        if (title != NULL && cJSON_IsString(title)) {
-            result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
-        }
-    }
+    const gchar* keyName;
+    int recipeCount = cJSON_GetArraySize(json);
+	
+    if (recipeCount > 0) {
+		cJSON* lastRecipe = cJSON_GetArrayItem(json, recipeCount - 1);
+		cJSON* lastKey = lastRecipe->child;
+		while (lastKey != NULL) {
+		    if (lastKey->type == cJSON_String) {
+		        keyName = lastKey->string;
+		        // Traitez ici la clé correspondante
+		        /*if (g_strcmp0(keyName, str5) == 0) {
+		            keyName="\n";
+		            break; // Sortir de la boucle si la clé "iron" est trouvée
+		        }*/
+		    }
+		    lastKey = lastKey->next;
+		}
+	}
+	cJSON *recipe=NULL;
+    cJSON_ArrayForEach(recipe, json) {
+        if (cJSON_IsObject(recipe)) {
+        // Le tableau recipe contient un objet JSON valide
+        // Vous pouvez accéder aux propriétés de l'objet ici
+        title = cJSON_GetObjectItem(recipe, "status");
+        param = cJSON_GetObjectItem(recipe, keyName);
 
+        // Effectuez les traitements nécessaires avec les données obtenues
+        // ...
+
+    } else {
+        // Le tableau recipe ne contient pas un objet JSON valide
+        // Effectuez le traitement approprié en cas d'erreur ou d'absence de données
+        g_print("ok erreur");
+    }
+        
+         if (title != NULL && cJSON_IsString(title)) {
+    		if (g_strcmp0(keyName, "image") == 0) {
+    	
+    		
+    		 result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+    		
+		    result = g_strconcat(result,"\n", NULL);
+		  
+		   
+       }else{
+		        
+		    result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+		   
+		    gchar* concatenated2 = g_strdup_printf("%s%s", keyName, " : ");
+		    result = g_strconcat(result,g_strconcat(concatenated2, param->valuestring, "\n", NULL),NULL);
+		    result = g_strconcat(result,"\n", NULL);
+		    
+		}
+        
+    	}
+    	else{
+    		g_print("erreur%s\n", result);
+    		
+    	}
+    }
+    
+    
+    
+
+    // Création du widget GtkTextView pour afficher les titres
     // Création du widget GtkTextView pour afficher les titres
     text_view = gtk_text_view_new();
     buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
@@ -602,7 +662,7 @@ void open_file6(GtkButton *button,gpointer user_data) {
     g_print("%s\n", chaine);
     
     
-    
+   
     
     
     while (List != NULL) {
@@ -687,7 +747,7 @@ void open_window18() {
     FILE *file;
     char *file_content;
     long file_size;
-    cJSON *json, *results, *recipe, *title;
+    cJSON *json, *recipe, *title, *param;
 
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
@@ -721,24 +781,52 @@ void open_window18() {
         return;
     }
 
-    // Accès aux résultats des recettes
-    results = cJSON_GetObjectItem(json, "results");
-    if (results == NULL || !cJSON_IsArray(results)) {
-        printf("Erreur lors de l'accès aux résultats des recettes.\n");
-        cJSON_Delete(json);
-        free(file_content);
-        fclose(file);
-        return;
-    }
+    
 
     // Concaténation des titres de recettes
     const gchar* str1 = "nom de recette : ";
     result = g_strdup("");
-    cJSON_ArrayForEach(recipe, results) {
+    const gchar* keyName;
+    int recipeCount = cJSON_GetArraySize(json);
+	
+    if (recipeCount > 0) {
+		cJSON* lastRecipe = cJSON_GetArrayItem(json, recipeCount - 1);
+		cJSON* lastKey = lastRecipe->child;
+		while (lastKey != NULL) {
+		    if (lastKey->type == cJSON_String) {
+		        keyName = lastKey->string;
+		        // Traitez ici la clé correspondante
+		        /*if (g_strcmp0(keyName, str5) == 0) {
+		            keyName="\n";
+		            break; // Sortir de la boucle si la clé "iron" est trouvée
+		        }*/
+		    }
+		    lastKey = lastKey->next;
+		}
+	}
+    cJSON_ArrayForEach(recipe, json) {
         title = cJSON_GetObjectItem(recipe, "name");
-        if (title != NULL && cJSON_IsString(title)) {
-            result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
-        }
+        param = cJSON_GetObjectItem(recipe, keyName);
+        
+         if (title != NULL && cJSON_IsString(title)) {
+    	if (g_strcmp0(keyName, "image") == 0) {
+    	
+    		
+    		 result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+    		
+		    result = g_strconcat(result,"\n", NULL);
+		  
+		   
+       }else{
+		        
+		    result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+		   
+		    gchar* concatenated2 = g_strdup_printf("%s%s", keyName, " : ");
+		    result = g_strconcat(result,g_strconcat(concatenated2, param->valuestring, "\n", NULL),NULL);
+		    result = g_strconcat(result,"\n", NULL);
+		}
+        
+    }
     }
 
     // Création du widget GtkTextView pour afficher les titres
@@ -864,7 +952,7 @@ void open_window17() {
     FILE *file;
     char *file_content;
     long file_size;
-    cJSON *json, *results, *recipe, *title;
+    cJSON *json,  *recipe, *title, *calories, *protein, *fat, *carbs, *param;
     
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
@@ -898,7 +986,7 @@ void open_window17() {
         return;
     }
 
-    // Accès aux résultats des recettes
+   /* // Accès aux résultats des recettes
     results = cJSON_GetObjectItem(json, "results");
    if (results == NULL || !cJSON_IsArray(results)) {
         printf("Erreur lors de l'accès aux résultats des recettes.\n");
@@ -916,7 +1004,70 @@ void open_window17() {
         if (title != NULL && cJSON_IsString(title)) {
             result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
         }
+    }*/
+    
+    const gchar* str1 = "Titre de recette : ";
+    const gchar* str2 = "calories : ";
+    const gchar* str3 = "protein : ";
+    const gchar* str4 = "fat: ";
+    const gchar* str5 = "carbs : ";
+    const gchar* keyName;
+    int recipeCount = cJSON_GetArraySize(json);
+	if (recipeCount > 0) {
+		cJSON* lastRecipe = cJSON_GetArrayItem(json, recipeCount - 1);
+		cJSON* lastKey = lastRecipe->child;
+		while (lastKey != NULL) {
+		    if (lastKey->type == cJSON_String) {
+		        keyName = lastKey->string;
+		        // Traitez ici la clé correspondante
+		        /*if (g_strcmp0(keyName, str5) == 0) {
+		            keyName="\n";
+		            break; // Sortir de la boucle si la clé "iron" est trouvée
+		        }*/
+		    }
+		    lastKey = lastKey->next;
+		}
+	}
+	
+    result = g_strdup("");
+    // Accès aux résultats des recettes
+	cJSON_ArrayForEach(recipe, json) {
+    title = cJSON_GetObjectItem(recipe, "title");
+    calories = cJSON_GetObjectItem(recipe, "calories");
+    protein = cJSON_GetObjectItem(recipe, "protein");
+    fat = cJSON_GetObjectItem(recipe, "fat");
+    carbs = cJSON_GetObjectItem(recipe, "carbs");
+    param = cJSON_GetObjectItem(recipe, keyName);
+    if (title != NULL && cJSON_IsString(title)) {
+    	if (g_strcmp0(keyName, "carbs") == 0) {
+    	
+    		
+    		
+    		result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+		    gchar* concatenated = g_strdup_printf("%s%d", "", calories->valueint);
+		    result = g_strconcat(result,g_strconcat(str2, concatenated, "\n", NULL),NULL);
+		    result = g_strconcat(result,g_strconcat(str3, protein->valuestring, "\n", NULL),NULL);
+		    result = g_strconcat(result,g_strconcat(str4, fat->valuestring, "\n", NULL),NULL);
+		    result = g_strconcat(result,g_strconcat(str5, carbs->valuestring, "\n", NULL),NULL);
+		    result = g_strconcat(result,"\n", NULL);
+		  
+		   
+       }else{
+		        
+		    result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+		    gchar* concatenated = g_strdup_printf("%s%d", "", calories->valueint);
+		    result = g_strconcat(result,g_strconcat(str2, concatenated, "\n", NULL),NULL);
+		    result = g_strconcat(result,g_strconcat(str3, protein->valuestring, "\n", NULL),NULL);
+		    result = g_strconcat(result,g_strconcat(str4, fat->valuestring, "\n", NULL),NULL);
+		    result = g_strconcat(result,g_strconcat(str5, carbs->valuestring, "\n", NULL),NULL);
+		    gchar* concatenated2 = g_strdup_printf("%s%s", keyName, " : ");
+		    result = g_strconcat(result,g_strconcat(concatenated2, param->valuestring, "\n", NULL),NULL);
+		    result = g_strconcat(result,"\n", NULL);
+		}
+        
     }
+}
+
 
     // Création du widget GtkTextView pour afficher les titres
     text_view = gtk_text_view_new();
@@ -1092,6 +1243,7 @@ void open_window16() {
         title = cJSON_GetObjectItem(recipe, "name");
         if (title != NULL && cJSON_IsString(title)) {
             result = g_strconcat(result,g_strconcat(str1, title->valuestring, "\n", NULL),NULL);
+            result = g_strconcat(result,"\n", NULL);
         }
     }
 
@@ -1874,7 +2026,7 @@ void on_button_clicked_triple_I(GtkButton *button, gpointer user_data) {
 void open_window3(GtkButton *button,gpointer user_data) {
 	GtkWidget *vbox3;
     GtkWidget *box3;
-    GtkWidget  *button8, *button9, *button10;
+    GtkWidget  *button1, *button8, *button9, *button10;
     window3 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window3), "Ingredients");
     gtk_window_set_default_size(GTK_WINDOW(window3), 400, 400);
@@ -1904,12 +2056,18 @@ void open_window3(GtkButton *button,gpointer user_data) {
     button10 = gtk_button_new_with_label("Substitutes");
     gtk_box_pack_start(GTK_BOX(box3), button10, TRUE, TRUE, 0);
     
+    button1 = gtk_button_new_with_label("Fermer");
+    gtk_box_pack_start(GTK_BOX(box3), button1, TRUE, TRUE, 0);
+    
+    
     g_signal_connect(button8, "clicked", G_CALLBACK(on_button_clicked_triple_I), NULL);
     g_signal_connect(button8, "clicked", G_CALLBACK(open_window4), (gpointer)concatenated);
     g_signal_connect(button9, "clicked", G_CALLBACK(on_button_clicked_triple_I),NULL);
     g_signal_connect(button9, "clicked", G_CALLBACK(open_window6), (gpointer)concatenated);
     g_signal_connect(button10, "clicked", G_CALLBACK(on_button_clicked_triple_I),NULL);
     g_signal_connect(button10, "clicked", G_CALLBACK(open_window8), (gpointer)concatenated);
+    
+    g_signal_connect(button1, "clicked", G_CALLBACK(close_window), window3);
     
     gtk_widget_show_all(window3);
     
@@ -1919,7 +2077,7 @@ void open_window3(GtkButton *button,gpointer user_data) {
 void open_window2(GtkButton *button,gpointer user_data) {
 	GtkWidget *vbox2;
     GtkWidget *box2;
-    GtkWidget  *button5, *button6, *button7;
+    GtkWidget  *button1, *button5, *button6, *button7;
     window2 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window2), "Recipes");
     gtk_window_set_default_size(GTK_WINDOW(window2), 400, 400);
@@ -1950,13 +2108,17 @@ void open_window2(GtkButton *button,gpointer user_data) {
     button7 = gtk_button_new_with_label("FindByIngredients");
     gtk_box_pack_start(GTK_BOX(box2), button7, TRUE, TRUE, 0);
     
+    button1 = gtk_button_new_with_label("Fermer");
+    gtk_box_pack_start(GTK_BOX(box2), button1, TRUE, TRUE, 0);
+    
+    
     g_signal_connect(button5, "clicked", G_CALLBACK(on_button_clicked_triple_R), NULL);
     g_signal_connect(button5, "clicked", G_CALLBACK(open_window5), (gpointer)concatenated);
     g_signal_connect(button6, "clicked", G_CALLBACK(on_button_clicked_triple_R),NULL);
     g_signal_connect(button6, "clicked", G_CALLBACK(open_window7), (gpointer)concatenated);
     g_signal_connect(button7, "clicked", G_CALLBACK(on_button_clicked_triple_R),NULL);
     g_signal_connect(button7, "clicked", G_CALLBACK(open_window9), (gpointer)concatenated);
-    
+    g_signal_connect(button1, "clicked", G_CALLBACK(close_window), window2);
     
     gtk_widget_show_all(window2);
     

@@ -1,1 +1,1 @@
-{"status":"failure", "code":402,"message":"Your daily points limit of 150 has been reached. Please upgrade your plan to continue using the API."}
+{"status":"success","ingredient":"butter","substitutes":["1 cup = 7/8 cup shortening and 1/2 tsp salt","1 cup = 7/8 cup vegetable oil + 1/2 tsp salt","1/2 cup = 1/4 cup buttermilk + 1/4 cup unsweetened applesauce","1 cup = 1 cup margarine"],"message":"Found 4 substitutes for the ingredient."}
