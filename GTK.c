@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <curl/curl.h>
-#include "cJSON.h"
+#include <cjson/cJSON.h>
 
 
 struct Liste{
@@ -2075,16 +2075,25 @@ void open_window3(GtkButton *button,gpointer user_data) {
 
 
 void open_window2(GtkButton *button,gpointer user_data) {
+	 
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox2;
     GtkWidget *box2;
     GtkWidget  *button1, *button5, *button6, *button7;
-    window2 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window2), "Recipes");
-    gtk_window_set_default_size(GTK_WINDOW(window2), 400, 400);
-    g_signal_connect(window2, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "Recipes");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    
+    /*
     
     box2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window2), box2);
+    gtk_container_add(GTK_CONTAINER(window1), box2);
     
     
     const gchar *chaine = (const gchar *)user_data;
@@ -2096,7 +2105,7 @@ void open_window2(GtkButton *button,gpointer user_data) {
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window2), vbox2);
+	gtk_container_add(GTK_CONTAINER(window1), vbox2);
 	
 	
 	button5 = gtk_button_new_with_label("ComplexSearch");
@@ -2118,9 +2127,9 @@ void open_window2(GtkButton *button,gpointer user_data) {
     g_signal_connect(button6, "clicked", G_CALLBACK(open_window7), (gpointer)concatenated);
     g_signal_connect(button7, "clicked", G_CALLBACK(on_button_clicked_triple_R),NULL);
     g_signal_connect(button7, "clicked", G_CALLBACK(open_window9), (gpointer)concatenated);
-    g_signal_connect(button1, "clicked", G_CALLBACK(close_window), window2);
+    g_signal_connect(button1, "clicked", G_CALLBACK(close_window), window1);*/
     
-    gtk_widget_show_all(window2);
+    gtk_widget_show_all(window1);
     
 }
 
@@ -2204,6 +2213,10 @@ int main(int argc, char *argv[]) {
 	
     g_signal_connect(button1, "clicked", G_CALLBACK(on_button_clicked_double), NULL);
     g_signal_connect(button1, "clicked", G_CALLBACK(open_window2), (gpointer)json_text);
+    
+    // Connexion du signal "destroy" à la fonction de fermeture de la fenêtre précédente
+    //g_signal_connect(button1, "destroy", G_CALLBACK(close_window), window1);
+    
     g_signal_connect(button2, "clicked", G_CALLBACK(on_button_clicked_double), NULL);
     g_signal_connect(button2, "clicked", G_CALLBACK(open_window3), (gpointer)json_text);
 	
