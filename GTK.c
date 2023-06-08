@@ -6,71 +6,110 @@
 #include <curl/curl.h>
 #include <cjson/cJSON.h>
 
-
+// Définition de la structure Liste
 struct Liste{
-    const gchar* data;
-    struct Liste* next;
+    const gchar* data;   // Champ de données de type gchar* (chaîne de caractères)
+    struct Liste* next;  // Pointeur vers la prochaine structure Liste
 };
+
 
 struct Liste* List = NULL; // Déclaration de la variable globale
 
 
-GtkWidget *window1, *window2, *window3, *window4, *window5, *window6, *window7, *window8, *window9, *window10, *window11, *window12, *window13, *window14, *window15, *window16, *window17, *window18, *window19, *window20, *window21;
+GtkWidget *window1 = NULL; // Déclaration de la fenetre window1
 
-// Déclaration du pointeur de fichier global
+
+// Déclaration du pointeur de fichier global data
 FILE *data;
 
 
+
+
+// Fonction pour ajouter un nouvel élément à une liste
 void addListe(const gchar* newData) {
+    // Allouer de la mémoire pour une nouvelle structure Liste
     struct Liste* newList = malloc(sizeof(struct Liste));
+    
+    // Affecter la valeur du nouveau data
     newList->data = newData;
+    
+    // Définir le prochain pointeur de la nouvelle liste pour qu'il pointe vers l'ancienne liste
     newList->next = List;
+    
+    // Mettre à jour le pointeur de la liste pour qu'il pointe vers la nouvelle liste
     List = newList;
 }
 
 
 void freeList() {
+    // Déclaration d'un pointeur vers une structure Liste nommé "current" et initialisation avec la valeur du pointeur List
     struct Liste* current = List;
+
+    // Boucle tant que le pointeur "current" n'est pas NULL
     while (current != NULL) {
+        // Déclaration d'un pointeur vers une structure Liste nommé "next" et initialisation avec la valeur du pointeur next de la structure courante
         struct Liste* next = current->next;
+
+        // Libération de la mémoire occupée par la structure courante
         free(current);
+
+        // Mise à jour du pointeur "current" avec la valeur du pointeur "next" pour passer à la structure suivante
         current = next;
     }
 }
 
+
+
+
 // Fonction de rappel pour écrire les données de réponse dans une chaîne
 size_t write_callback(void* contents, size_t size, size_t nmemb, char** response) {
-	size_t realsize = size * nmemb;
+    // Calcul de la taille réelle des données reçues
+    size_t realsize = size * nmemb;
+
+    // Réallocation de la mémoire pour la réponse
     *response = realloc(*response, realsize + 1);
-    
+
+    // Vérification de l'allocation de mémoire
     if (*response == NULL) {
         printf("Erreur de mémoire lors de l'allocation du tampon de réponse.\n");
         return 0;
     }
+
+    // Copie des données reçues dans le tampon de réponse
     memcpy(*response, contents, realsize);
+
+    // Ajout du caractère de fin de chaîne
     (*response)[realsize] = '\0';
+
+    // Retourne la taille réelle des données reçues
     return realsize;
 }
 
+
+
 // Fonction de rappel pour écrire les données de réponse dans un fichier
 size_t write_callback2(void* contents, size_t size, size_t nmemb, FILE* file) {
+	// Le type size_t est un type de données entier non signé qui est défini dans le langage C.
+	
     return fwrite(contents, size, nmemb, file);
 }
 
-// Fonction pour lire le contenu d'un fichier et le stocker dans une chaîne de caractères
+
+
 char* read_file(const char* filename) {
+    // Ouvrir le fichier en mode lecture
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
         printf("Impossible d'ouvrir le fichier.\n");
         return NULL;
     }
 
-    // Déterminer la taille du fichier
+    // Déterminer la taille du fichier en déplaçant la position du curseur à la fin du fichier
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
-    rewind(file);
+    rewind(file);  // Réinitialiser la position du curseur au début du fichier
 
-    // Allouer un tampon pour le contenu du fichier
+    // Allouer un tampon pour contenir le contenu du fichier, plus un caractère supplémentaire pour le terminateur de chaîne
     char* buffer = (char*)malloc((file_size + 1) * sizeof(char));
     if (buffer == NULL) {
         fclose(file);
@@ -80,12 +119,13 @@ char* read_file(const char* filename) {
 
     // Lire le contenu du fichier dans le tampon
     fread(buffer, sizeof(char), file_size, file);
-    buffer[file_size] = '\0';
+    buffer[file_size] = '\0';  // Ajouter un terminateur de chaîne à la fin du tampon
 
     fclose(file);
 
-    return buffer;
+    return buffer;  // Retourner le tampon contenant le contenu du fichier
 }
+
 
 
 // Fonction qui permet de fermer une fenetre gtk
@@ -93,60 +133,119 @@ void close_window(GtkWidget *widget, gpointer data) {
     gtk_widget_destroy(data);
 }
 
+
 // Fonction de rappel qui se declenche lorsque le bouton est cliqué et affichage d'un print dans le Terminal
 void on_button_name(GtkButton *button, gpointer user_data) {
+    // La fonction de rappel appelée lors du clic sur le bouton.
+    // Le paramètre "button" est le bouton qui a été cliqué.
+    // Le paramètre "user_data" est un pointeur générique vers des données utilisateur supplémentaires.
+
+    // Cast du pointeur générique "user_data" en un pointeur GtkWidget qui représente un widget d'entrée de texte.
     GtkWidget *entry = GTK_WIDGET(user_data);
+
+    // Récupération du texte saisi dans le widget d'entrée de texte.
     const gchar *name = gtk_entry_get_text(GTK_ENTRY(entry));
+
+    // Affichage du nom saisi.
     g_print("Le nom saisi est : %s\n", name);
+
+    // Vérification si le pointeur "data" est nul.
     if (data == NULL) {
         printf("Erreur lors de l'ouverture du fichier\n");
     }
+
+    // Écriture du nom dans le fichier pointé par "data".
     fprintf(data, "%s\n", name);
 }
 
+
 // Fonction de rappel qui se declenche lorsque le bouton est cliqué et affichage d'un print dans le Terminal
 void on_button_mail(GtkButton *button, gpointer user_data) {
+    // Cette fonction est le rappel (callback) pour le clic sur le bouton.
+
+    // Convertit le pointeur générique "user_data" en un pointeur de type GtkWidget
     GtkWidget *entry = GTK_WIDGET(user_data);
+
+    // Récupère le texte saisi dans le widget d'entrée (entry)
     const gchar *mail = gtk_entry_get_text(GTK_ENTRY(entry));
+
+    // Affiche le texte saisi dans la console
     g_print("Le mail saisi est : %s\n", mail);
+
+    // Vérifie si "data" est NULL (non valide)
     if (data == NULL) {
         printf("Erreur lors de l'ouverture du fichier\n");
     }
+
+    // Écrit le texte saisi dans le fichier "data"
     fprintf(data, "%s\n", mail);
 }
+
 
 int global_result; // Variable globale pour stocker le résultat
 
 
 
-void on_button_nbparam(GtkButton *button ,gpointer user_data) {
+
+void on_button_nbparam(GtkButton *button, gpointer user_data) {
+    // Cette fonction est appelée lorsque le bouton est cliqué
+    // Elle récupère le widget de l'entrée de texte en tant que gpointer, puis le convertit en GtkWidget
     GtkWidget *entry = GTK_WIDGET(user_data);
+
+    // Récupère le texte de l'entrée de texte en tant que const gchar*
     const gchar *nbparam = gtk_entry_get_text(GTK_ENTRY(entry));
-    g_print("Le nombre de parametre est de : %s\n", nbparam);
-    //char tab[100] = nbpamarm;
+
+    // Affiche le nombre de paramètres dans la console
+    g_print("Le nombre de paramètre est de : %s\n", nbparam);
+
+    // Convertit la chaîne de caractères en entier avec la fonction atoi()
     global_result = atoi(nbparam);
+
+    // Affiche le résultat dans la console
     printf("Le résultat est : %d\n", global_result);
+
+    // Vérifie si "data" est NULL (non initialisé)
     if (data == NULL) {
         printf("Erreur lors de l'ouverture du fichier\n");
-        
     }
-    fprintf(data, "%s\n",nbparam);
+
+    // Écrit le contenu de "nbparam" dans le fichier pointé par "data"
+    fprintf(data, "%s\n", nbparam);
 }
+
+
+
 
 void on_button_param(const gchar* tab, gpointer user_data) {
+    // Cette fonction est appelée lorsque le bouton est cliqué.
+    // La variable "tab" est un paramètre qui peut être passé à cette fonction.
+    // La variable "user_data" est un pointeur vers les données utilisateur.
+    
     GtkWidget *entry = GTK_WIDGET(user_data);
+    // On convertit le pointeur "user_data" en un pointeur de type GtkWidget.
+    // Cela nous permet d'accéder à l'objet Entry (zone de saisie) associé.
+    
     const gchar* param = gtk_entry_get_text(GTK_ENTRY(entry));
+    // On récupère le texte saisi dans la zone de saisie Entry.
+    // La fonction gtk_entry_get_text() renvoie une chaîne de caractères de type const gchar*.
+    
     g_print("Le nom de parametre est : %s\n", param);
+    // On affiche le nom du paramètre à l'aide de la fonction g_print().
+    
     addListe(param);
-    
-  
-    
+    // On appelle la fonction addListe() en passant le nom du paramètre comme argument.
+    // Ici, vous devriez définir cette fonction addListe() pour effectuer l'action souhaitée avec le paramètre.
 }
-
 
 
 void open_window21() {
-    GtkWidget *window21, *text_view, *scroll_window;
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
+    GtkWidget  *text_view, *scroll_window;
     GtkTextBuffer *buffer;
     gchar *result;
     FILE *file;
@@ -156,10 +255,10 @@ void open_window21() {
 
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
-    window21 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window21), "API2.3");
-    gtk_window_set_default_size(GTK_WINDOW(window21), 400, 400);
-    g_signal_connect(window21, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API2.3");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
      // Ouverture et lecture du fichier JSON
     file = fopen("response.txt", "r");
@@ -216,12 +315,14 @@ void open_window21() {
     // Création de la fenêtre de défilement pour le widget GtkTextView
     scroll_window = gtk_scrolled_window_new(NULL, NULL);
     gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
-
+	
+	
+	
     // Ajout du widget GtkTextView à la fenêtre
-    gtk_container_add(GTK_CONTAINER(window21), scroll_window);
+    gtk_container_add(GTK_CONTAINER(window1), scroll_window);
 
     // Affichage de la fenêtre et démarrage de la boucle principale GTK
-    gtk_widget_show_all(window21);
+    gtk_widget_show_all(window1);
     gtk_main();
 
     // Nettoyage
@@ -336,7 +437,14 @@ void open_file1(GtkButton *button,gpointer user_data) {
 }
 
 void open_window20() {
-	GtkWidget *window20, *text_view, *scroll_window;
+
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
+	GtkWidget  *text_view, *scroll_window;
     GtkTextBuffer *buffer;
     gchar *result;
     FILE *file;
@@ -346,10 +454,10 @@ void open_window20() {
 
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
-    window20 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window20), "API6.3");
-    gtk_window_set_default_size(GTK_WINDOW(window20), 400, 400);
-    g_signal_connect(window20, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API6.3");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     // Ouverture et lecture du fichier JSON
     file = fopen("response.txt", "r");
@@ -406,10 +514,10 @@ void open_window20() {
     gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
 
     // Ajout du widget GtkTextView à la fenêtre
-    gtk_container_add(GTK_CONTAINER(window20), scroll_window);
+    gtk_container_add(GTK_CONTAINER(window1), scroll_window);
 
     // Affichage de la fenêtre et démarrage de la boucle principale GTK
-    gtk_widget_show_all(window20);
+    gtk_widget_show_all(window1);
     gtk_main();
 
     // Nettoyage
@@ -510,7 +618,14 @@ void open_file3(GtkButton *button,gpointer user_data) {
 }
 
 void open_window19() {
-	GtkWidget *window19, *text_view, *scroll_window;
+
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
+	GtkWidget  *text_view, *scroll_window;
     GtkTextBuffer *buffer;
     gchar *result;
     FILE *file;
@@ -520,10 +635,10 @@ void open_window19() {
 	
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
-    window19 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window19), "API5.3");
-    gtk_window_set_default_size(GTK_WINDOW(window19), 400, 400);
-    g_signal_connect(window19, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API5.3");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     // Ouverture et lecture du fichier JSON
     file = fopen("response.txt", "r");
@@ -638,10 +753,10 @@ void open_window19() {
     gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
 
     // Ajout du widget GtkTextView à la fenêtre
-    gtk_container_add(GTK_CONTAINER(window19), scroll_window);
+    gtk_container_add(GTK_CONTAINER(window1), scroll_window);
 
     // Affichage de la fenêtre et démarrage de la boucle principale GTK
-    gtk_widget_show_all(window19);
+    gtk_widget_show_all(window1);
     gtk_main();
 
     // Nettoyage
@@ -741,7 +856,14 @@ void open_file6(GtkButton *button,gpointer user_data) {
 }
 
 void open_window18() {
-	GtkWidget *window18, *text_view, *scroll_window;
+
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
+	GtkWidget *text_view, *scroll_window;
     GtkTextBuffer *buffer;
     gchar *result;
     FILE *file;
@@ -751,10 +873,10 @@ void open_window18() {
 
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
-    window18 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window18), "API3.3");
-    gtk_window_set_default_size(GTK_WINDOW(window18), 400, 400);
-    g_signal_connect(window18, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API3.3");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     // Ouverture et lecture du fichier JSON
     file = fopen("response.txt", "r");
@@ -839,10 +961,10 @@ void open_window18() {
     gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
 
     // Ajout du widget GtkTextView à la fenêtre
-    gtk_container_add(GTK_CONTAINER(window18), scroll_window);
+    gtk_container_add(GTK_CONTAINER(window1), scroll_window);
 
     // Affichage de la fenêtre et démarrage de la boucle principale GTK
-    gtk_widget_show_all(window18);
+    gtk_widget_show_all(window1);
     gtk_main();
 
     // Nettoyage
@@ -946,7 +1068,14 @@ void open_file5(GtkButton *button,gpointer user_data) {
 }
 
 void open_window17() {
-	GtkWidget *window17, *text_view, *scroll_window;
+	
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
+	GtkWidget *text_view, *scroll_window;
     GtkTextBuffer *buffer;
     gchar *result;
     FILE *file;
@@ -956,10 +1085,10 @@ void open_window17() {
     
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
-    window17 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window17), "API4.3");
-    gtk_window_set_default_size(GTK_WINDOW(window17), 400, 400);
-     g_signal_connect(window17, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API4.3");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+     g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     // Ouverture et lecture du fichier JSON
     file = fopen("response.txt", "r");
@@ -1079,10 +1208,10 @@ void open_window17() {
     gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
 
     // Ajout du widget GtkTextView à la fenêtre
-    gtk_container_add(GTK_CONTAINER(window17), scroll_window);
+    gtk_container_add(GTK_CONTAINER(window1), scroll_window);
 
     // Affichage de la fenêtre et démarrage de la boucle principale GTK
-    gtk_widget_show_all(window17);
+    gtk_widget_show_all(window1);
     gtk_main();
 
     // Nettoyage
@@ -1186,7 +1315,14 @@ void open_file2(GtkButton *button,gpointer user_data) {
 }
 
 void open_window16() {
-	GtkWidget *window16, *text_view, *scroll_window;
+
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
+	GtkWidget *text_view, *scroll_window;
     GtkTextBuffer *buffer;
     gchar *result;
     FILE *file;
@@ -1196,10 +1332,10 @@ void open_window16() {
 
     // Création de la fenêtre GTK
     gtk_init(NULL, NULL);
-    window16 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window16), "API1.3");
-    gtk_window_set_default_size(GTK_WINDOW(window16), 400, 400);
-    g_signal_connect(window16, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API1.3");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     // Ouverture et lecture du fichier JSON
     file = fopen("response.txt", "r");
@@ -1257,10 +1393,10 @@ void open_window16() {
     gtk_container_add(GTK_CONTAINER(scroll_window), text_view);
 
     // Ajout du widget GtkTextView à la fenêtre
-    gtk_container_add(GTK_CONTAINER(window16), scroll_window);
+    gtk_container_add(GTK_CONTAINER(window1), scroll_window);
 
     // Affichage de la fenêtre et démarrage de la boucle principale GTK
-    gtk_widget_show_all(window16);
+    gtk_widget_show_all(window1);
     gtk_main();
 
     // Nettoyage
@@ -1361,19 +1497,26 @@ void open_file4(GtkButton *button,gpointer user_data) {
 }
 
 void open_window15(GtkButton *button,gpointer user_data) {
+	
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
     GtkWidget *box;
     GtkWidget *button1, *button2;
-    window15 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window15), "API6.2");
-    gtk_window_set_default_size(GTK_WINDOW(window15), 400, 400);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API6.2");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window15), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window15), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
     
     // Création du bouton
@@ -1389,7 +1532,7 @@ void open_window15(GtkButton *button,gpointer user_data) {
     	gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 0);
     	//Pour entrer le nom des parametre 
     	g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_param), entry);
-    	g_signal_connect(G_OBJECT(window15), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    	//g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     	
     	
    	}
@@ -1400,30 +1543,37 @@ void open_window15(GtkButton *button,gpointer user_data) {
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
-    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window15);
-    g_signal_connect(G_OBJECT(window15), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
+    //g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
-	gtk_container_add(GTK_CONTAINER(window15), vbox);	
+	gtk_container_add(GTK_CONTAINER(window1), vbox);	
     
-    gtk_widget_show_all(window15);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window14(GtkButton *button,gpointer user_data) {
+	
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
     GtkWidget *box;
     GtkWidget *button1, *button2;
-    window14 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window14), "API5.2");
-    gtk_window_set_default_size(GTK_WINDOW(window14), 400, 400);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API5.2");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window14), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window14), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
     
     // Création du bouton
@@ -1439,7 +1589,7 @@ void open_window14(GtkButton *button,gpointer user_data) {
     	gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 0);
     	//Pour entrer le nom des parametre 
     	g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_param), entry);
-    	g_signal_connect(G_OBJECT(window14), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    	g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     	
     	
    	}
@@ -1450,30 +1600,37 @@ void open_window14(GtkButton *button,gpointer user_data) {
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
-    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window14);
-    g_signal_connect(G_OBJECT(window14), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
+    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
-	gtk_container_add(GTK_CONTAINER(window14), vbox);	
+	gtk_container_add(GTK_CONTAINER(window1), vbox);	
     
-    gtk_widget_show_all(window14);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window13(GtkButton *button,gpointer user_data) {
+	
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
     GtkWidget *box;
     GtkWidget *button1, *button2;
-    window13 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window13), "API4.2");
-    gtk_window_set_default_size(GTK_WINDOW(window13), 400, 400);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API4.2");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window13), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window13), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
     
     // Création du bouton
@@ -1489,7 +1646,7 @@ void open_window13(GtkButton *button,gpointer user_data) {
     	gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 0);
     	//Pour entrer le nom des parametre 
     	g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_param), entry);
-    	g_signal_connect(G_OBJECT(window13), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    	g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     	
     	
    	}
@@ -1500,30 +1657,37 @@ void open_window13(GtkButton *button,gpointer user_data) {
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
-    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window13);
-    g_signal_connect(G_OBJECT(window13), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
+    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
-	gtk_container_add(GTK_CONTAINER(window13), vbox);	
+	gtk_container_add(GTK_CONTAINER(window1), vbox);	
     
-    gtk_widget_show_all(window13);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window12(GtkButton *button,gpointer user_data) {
+	
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
     GtkWidget *box;
     GtkWidget *button1, *button2;
-    window12 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window12), "API3.2");
-    gtk_window_set_default_size(GTK_WINDOW(window12), 400, 400);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API3.2");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window12), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window12), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
     
     // Création du bouton
@@ -1539,7 +1703,7 @@ void open_window12(GtkButton *button,gpointer user_data) {
     	gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 0);
     	//Pour entrer le nom des parametre 
     	g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_param), entry);
-    	g_signal_connect(G_OBJECT(window12), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    	g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     	
     	
    	}
@@ -1550,30 +1714,37 @@ void open_window12(GtkButton *button,gpointer user_data) {
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
-    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window12);
-    g_signal_connect(G_OBJECT(window12), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
+    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
-	gtk_container_add(GTK_CONTAINER(window12), vbox);	
+	gtk_container_add(GTK_CONTAINER(window1), vbox);	
     
-    gtk_widget_show_all(window12);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window11(GtkButton *button,gpointer user_data) {
+		
+	
+	if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }	
+    
 	GtkWidget *vbox;
     GtkWidget *box;
     GtkWidget *button1, *button2;
-    window11 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window11), "API1.2");
-    gtk_window_set_default_size(GTK_WINDOW(window11), 400, 400);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API1.2");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window11), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window11), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
     
     // Création du bouton
@@ -1589,7 +1760,7 @@ void open_window11(GtkButton *button,gpointer user_data) {
     	gtk_box_pack_start(GTK_BOX(box), entry, TRUE, TRUE, 0);
     	//Pour entrer le nom des parametre 
     	g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_param), entry);
-    	g_signal_connect(G_OBJECT(window11), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    	g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     	
     	
    	}
@@ -1600,30 +1771,38 @@ void open_window11(GtkButton *button,gpointer user_data) {
 	// Création du bouton
 	button2 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box), button2, TRUE, TRUE, 0);
-    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window11);
-    g_signal_connect(G_OBJECT(window11), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
+    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
-	gtk_container_add(GTK_CONTAINER(window11), vbox);	
+	gtk_container_add(GTK_CONTAINER(window1), vbox);	
     
-    gtk_widget_show_all(window11);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window10(GtkButton *button,gpointer user_data) {
+	
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox10;
     GtkWidget *box5;
     GtkWidget *button13, *button14;
-    window10 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window10), "API2.2");
-    gtk_window_set_default_size(GTK_WINDOW(window10), 400, 400);
-    
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API2.2");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    //g_signal_connect(window1,  "destroy", G_CALLBACK(gtk_main_quit), NULL);
+     
     box5 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window10), box5);
+    gtk_container_add(GTK_CONTAINER(window1), box5);
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox10 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window10), vbox10);
+	gtk_container_add(GTK_CONTAINER(window1), vbox10);
 	
     
     // Création du bouton
@@ -1639,7 +1818,7 @@ void open_window10(GtkButton *button,gpointer user_data) {
     	gtk_box_pack_start(GTK_BOX(box5), entry, TRUE, TRUE, 0);
     	//Pour entrer le nom des parametre 
     	g_signal_connect(G_OBJECT(button13), "clicked", G_CALLBACK(on_button_param), entry);
-    	g_signal_connect(G_OBJECT(window10), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    	g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     	
     	
    	}
@@ -1651,28 +1830,35 @@ void open_window10(GtkButton *button,gpointer user_data) {
 	// Création du bouton
 	button14 =  gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box5), button14, TRUE, TRUE, 0);
-    g_signal_connect(button14, "clicked", G_CALLBACK(close_window), window10);
-    g_signal_connect(G_OBJECT(window10), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(button14, "clicked", G_CALLBACK(close_window), window1);
+    //g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     // Ajout de la boîte verticale à la deuxième fenêtre
-	gtk_container_add(GTK_CONTAINER(window10), vbox10);	
+	gtk_container_add(GTK_CONTAINER(window1), vbox10);	
     
-    gtk_widget_show_all(window10);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window9(GtkButton *button,gpointer user_data) {
+	
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
-    window9 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window9), "API6");
-    gtk_window_set_default_size(GTK_WINDOW(window9), 400, 400);
-    g_signal_connect(window9, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API6");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    //g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     GtkWidget *box;
     GtkWidget *entry;
     GtkWidget  *button1, *button2;
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window9), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     
     const char *chaine = (const char *)user_data;
@@ -1694,7 +1880,7 @@ void open_window9(GtkButton *button,gpointer user_data) {
     //Affichage du nombre de parametre dans le Terminal
     g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_nbparam),entry);
     //GINT_TO_POINTER(count
-    g_signal_connect(G_OBJECT(window9), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    //g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     g_signal_connect(button1, "clicked", G_CALLBACK(open_window15), (gpointer)concatenated);
     
@@ -1705,26 +1891,33 @@ void open_window9(GtkButton *button,gpointer user_data) {
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window9), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
-	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window9);
+	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
     
-    gtk_widget_show_all(window9);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window8(GtkButton *button,gpointer user_data) {
+	
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
-    window8 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window8), "API5");
-    gtk_window_set_default_size(GTK_WINDOW(window8), 400, 400);
-    g_signal_connect(window8, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API5");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     GtkWidget *box;
     GtkWidget *entry;
     GtkWidget  *button1, *button2;
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window8), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     const char *chaine = (const char *)user_data;
     g_print("%s\n", chaine);
@@ -1746,7 +1939,7 @@ void open_window8(GtkButton *button,gpointer user_data) {
     //Affichage du nombre de parametre dans le Terminal
     g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_nbparam),entry);
     //GINT_TO_POINTER(count
-    g_signal_connect(G_OBJECT(window8), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     g_signal_connect(button1, "clicked", G_CALLBACK(open_window14), (gpointer)concatenated);
     
@@ -1757,27 +1950,34 @@ void open_window8(GtkButton *button,gpointer user_data) {
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window8), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
-	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window8);
+	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
     
-    gtk_widget_show_all(window8);
+    gtk_widget_show_all(window1);
     
     
 }
 
 void open_window7(GtkButton *button,gpointer user_data) {
+
+	
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
-    window7 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window7), "API4");
-    gtk_window_set_default_size(GTK_WINDOW(window7), 400, 400);
-    g_signal_connect(window7, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API4");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    //g_signal_connect(window1,  "destroy", G_CALLBACK(gtk_main_quit), NULL);
     GtkWidget *box;
     GtkWidget *entry;
     GtkWidget  *button1, *button2;
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window7), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     
     const char *chaine = (const char *)user_data;
@@ -1801,7 +2001,7 @@ void open_window7(GtkButton *button,gpointer user_data) {
     //Affichage du nombre de parametre dans le Terminal
     g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_nbparam),entry);
     //GINT_TO_POINTER(count
-    g_signal_connect(G_OBJECT(window7), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    //g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     g_signal_connect(button1, "clicked", G_CALLBACK(open_window13), (gpointer)concatenated);
     
@@ -1812,26 +2012,32 @@ void open_window7(GtkButton *button,gpointer user_data) {
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window7), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
-	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window7);
+	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
     
-    gtk_widget_show_all(window7);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window6(GtkButton *button,gpointer user_data) {
+
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
-    window6 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window6), "API3");
-    gtk_window_set_default_size(GTK_WINDOW(window6), 400, 400);
-    g_signal_connect(window6, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API3");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     GtkWidget *box;
     GtkWidget *entry;
     GtkWidget  *button1, *button2;
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window6), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     
     const char *chaine = (const char *)user_data;
@@ -1855,7 +2061,7 @@ void open_window6(GtkButton *button,gpointer user_data) {
     //Affichage du nombre de parametre dans le Terminal
     g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_nbparam),entry);
     //GINT_TO_POINTER(count
-    g_signal_connect(G_OBJECT(window6), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     g_signal_connect(button1, "clicked", G_CALLBACK(open_window12), (gpointer)concatenated);
     
@@ -1866,26 +2072,34 @@ void open_window6(GtkButton *button,gpointer user_data) {
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window6), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
-	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window6);
+	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
     
-    gtk_widget_show_all(window6);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window5(GtkButton *button,gpointer user_data) {
+
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
+    
 	GtkWidget *vbox5;
-    window5 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window5), "API2");
-    gtk_window_set_default_size(GTK_WINDOW(window5), 400, 400);
-    g_signal_connect(window5, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API2");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+     //g_signal_connect(window1,  "destroy", G_CALLBACK(gtk_main_quit), NULL);
+     
     GtkWidget *box4;
     GtkWidget *entry3;
     GtkWidget  *button11, *button12;
     
     box4 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window5), box4);
+    gtk_container_add(GTK_CONTAINER(window1), box4);
     
     const char *chaine = (const char *)user_data;
     g_print("%s\n", chaine);
@@ -1894,10 +2108,12 @@ void open_window5(GtkButton *button,gpointer user_data) {
     
     g_print("%s\n", concatenated);
     
+    
     //Saisi du nom dans la boite entrez le nombre de paramètres que vous voulez renseigner pour votre recherche dans l'API
     entry3 = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry3), "Entrez le nombre de paramètres que vous voulez renseigner pour votre recherche dans l'API");
     gtk_box_pack_start(GTK_BOX(box4), entry3, TRUE, TRUE, 0);
+    
     
      // Création des bouton
     button11 = gtk_button_new_with_label("Valider");
@@ -1906,7 +2122,7 @@ void open_window5(GtkButton *button,gpointer user_data) {
     //Affichage du nombre de parametre dans le Terminal
     g_signal_connect(G_OBJECT(button11), "clicked", G_CALLBACK(on_button_nbparam),entry3);
     //GINT_TO_POINTER(count
-    g_signal_connect(G_OBJECT(window5), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    //g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     g_signal_connect(button11, "clicked", G_CALLBACK(open_window10), (gpointer)concatenated);
     
@@ -1917,26 +2133,32 @@ void open_window5(GtkButton *button,gpointer user_data) {
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox5 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window5), vbox5);
+	gtk_container_add(GTK_CONTAINER(window1), vbox5);
 	
-	g_signal_connect(button12, "clicked", G_CALLBACK(close_window), window5);
+	g_signal_connect(button12, "clicked", G_CALLBACK(close_window), window1);
     
-    gtk_widget_show_all(window5);
+    gtk_widget_show_all(window1);
     
 }
 
 void open_window4(GtkButton *button,gpointer user_data) {
+
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox;
-    window4 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window4), "API1");
-    gtk_window_set_default_size(GTK_WINDOW(window4), 400, 400);
-    g_signal_connect(window4, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "API1");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
     GtkWidget *box;
     GtkWidget *entry;
     GtkWidget  *button1, *button2;
     
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window4), box);
+    gtk_container_add(GTK_CONTAINER(window1), box);
     
     
     
@@ -1961,7 +2183,7 @@ void open_window4(GtkButton *button,gpointer user_data) {
     //Affichage du nombre de parametre dans le Terminal
     g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(on_button_nbparam),entry);
     //GINT_TO_POINTER(count
-    g_signal_connect(G_OBJECT(window4), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     g_signal_connect(button1, "clicked", G_CALLBACK(open_window11), (gpointer)concatenated);
     
@@ -1972,11 +2194,11 @@ void open_window4(GtkButton *button,gpointer user_data) {
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window4), vbox);
+	gtk_container_add(GTK_CONTAINER(window1), vbox);
 	
-	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window4);
+	g_signal_connect(button2, "clicked", G_CALLBACK(close_window), window1);
     
-    gtk_widget_show_all(window4);
+    gtk_widget_show_all(window1);
     
 }
 
@@ -2024,16 +2246,22 @@ void on_button_clicked_triple_I(GtkButton *button, gpointer user_data) {
 
 
 void open_window3(GtkButton *button,gpointer user_data) {
+
+	 if (window1 != NULL) {
+        gtk_widget_destroy(window1);
+        window1 = NULL;
+    }
+    
 	GtkWidget *vbox3;
     GtkWidget *box3;
     GtkWidget  *button1, *button8, *button9, *button10;
-    window3 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window3), "Ingredients");
-    gtk_window_set_default_size(GTK_WINDOW(window3), 400, 400);
-    g_signal_connect(window3, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(window1), "Ingredients");
+    gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
+     //g_signal_connect(window1,  "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
     box3 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gtk_container_add(GTK_CONTAINER(window3), box3);
+    gtk_container_add(GTK_CONTAINER(window1), box3);
     
     const char *chaine = (const char *)user_data;
     g_print("%s\n", chaine);
@@ -2044,7 +2272,7 @@ void open_window3(GtkButton *button,gpointer user_data) {
     
     // Création d'une boîte verticale pour contenir le bouton
 	vbox3 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_add(GTK_CONTAINER(window3), vbox3);
+	gtk_container_add(GTK_CONTAINER(window1), vbox3);
 	
 	
 	button8 = gtk_button_new_with_label("Search");
@@ -2067,9 +2295,9 @@ void open_window3(GtkButton *button,gpointer user_data) {
     g_signal_connect(button10, "clicked", G_CALLBACK(on_button_clicked_triple_I),NULL);
     g_signal_connect(button10, "clicked", G_CALLBACK(open_window8), (gpointer)concatenated);
     
-    g_signal_connect(button1, "clicked", G_CALLBACK(close_window), window3);
+    g_signal_connect(button1, "clicked", G_CALLBACK(close_window), window1);
     
-    gtk_widget_show_all(window3);
+    gtk_widget_show_all(window1);
     
 }
 
@@ -2088,9 +2316,9 @@ void open_window2(GtkButton *button,gpointer user_data) {
     window1 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window1), "Recipes");
     gtk_window_set_default_size(GTK_WINDOW(window1), 400, 400);
-    g_signal_connect(window1, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    //g_signal_connect(window1,  "destroy", G_CALLBACK(gtk_main_quit), NULL);
     
-    /*
+    
     
     box2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(window1), box2);
@@ -2127,9 +2355,11 @@ void open_window2(GtkButton *button,gpointer user_data) {
     g_signal_connect(button6, "clicked", G_CALLBACK(open_window7), (gpointer)concatenated);
     g_signal_connect(button7, "clicked", G_CALLBACK(on_button_clicked_triple_R),NULL);
     g_signal_connect(button7, "clicked", G_CALLBACK(open_window9), (gpointer)concatenated);
-    g_signal_connect(button1, "clicked", G_CALLBACK(close_window), window1);*/
+    g_signal_connect(button1, "clicked", G_CALLBACK(close_window), window1);
     
     gtk_widget_show_all(window1);
+    
+   
     
 }
 
@@ -2200,13 +2430,16 @@ int main(int argc, char *argv[]) {
     button3 = gtk_button_new_with_label("Fermer");
     gtk_box_pack_start(GTK_BOX(box1), button3, TRUE, TRUE, 0);
     
+    
     // Affichage du nom dans le Terminal
     g_signal_connect(G_OBJECT(button4), "clicked", G_CALLBACK(on_button_name), entry1);
-    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
-
+    //g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+	
+	
     // Affichage du mail dans le Terminal
     g_signal_connect(G_OBJECT(button4), "clicked", G_CALLBACK(on_button_mail), entry2);
-    g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    //g_signal_connect(G_OBJECT(window1), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    
 	
 	//gchar **concatenated_string_ptr = NULL;
 	const gchar *json_text ="https://api.spoonacular.com/";
@@ -2214,8 +2447,7 @@ int main(int argc, char *argv[]) {
     g_signal_connect(button1, "clicked", G_CALLBACK(on_button_clicked_double), NULL);
     g_signal_connect(button1, "clicked", G_CALLBACK(open_window2), (gpointer)json_text);
     
-    // Connexion du signal "destroy" à la fonction de fermeture de la fenêtre précédente
-    //g_signal_connect(button1, "destroy", G_CALLBACK(close_window), window1);
+   
     
     g_signal_connect(button2, "clicked", G_CALLBACK(on_button_clicked_double), NULL);
     g_signal_connect(button2, "clicked", G_CALLBACK(open_window3), (gpointer)json_text);
