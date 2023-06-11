@@ -2,12 +2,12 @@ CC = gcc
 CFLAGS = -Wall `pkg-config --cflags gtk+-3.0`
 LDFLAGS = `pkg-config --libs gtk+-3.0` -lcurl -lm -lcjson
 
-all : GTK
+all : Requeteur
 
-GTK : GTK.o
-	gcc $(CFLAGS) -o GTK GTK.o $(LDFLAGS)
+Requeteur : Requeteur.o
+	gcc $(CFLAGS) -o Requeteur Requeteur.o $(LDFLAGS)
 
-GTK.o : GTK.c
-	$(CC) $(CFLAGS) -c GTK.c
+Requeteur.o : Requeteur.c
+	$(CC) $(CFLAGS) -c Requeteur.c
 
 

@@ -340,7 +340,7 @@ void open_file1(GtkButton *button,gpointer user_data) {
 	
     CURL *curl;
     CURLcode res;
-    const char *chaine = (const char *)user_data;
+    const char *chaine = g_strdup(url);
     g_print("%s\n", chaine);
     
     
@@ -952,7 +952,7 @@ void open_window18() {
 		    result = g_strconcat(result,"\n", NULL);
 		}
         
-    }
+    	}
     }
 
     // Création du widget GtkTextView pour afficher les titres
@@ -1199,7 +1199,7 @@ void open_window17() {
 		}
         
     }
-}
+	}
 
 
     // Création du widget GtkTextView pour afficher les titres

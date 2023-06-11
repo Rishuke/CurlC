@@ -78,7 +78,7 @@ void on_button_nbparam(GtkButton *button ,gpointer user_data) {
 
 const gchar *param;
 
-void on_button_param(const gchar* tab, gpointer user_data) {
+void on_button_param(GtkButton *button , gpointer user_data) {
     GtkWidget *entry = GTK_WIDGET(user_data);
     param = gtk_entry_get_text(GTK_ENTRY(entry));
     g_print("Le nom de parametre est : %s\n", param);
@@ -153,9 +153,10 @@ void open_window3() {
 	if(curl) {
     		FILE* file = fopen("response.txt", "wb"); // Ouvre le fichier en mode binaire
   		char* response = NULL;
-  		const gchar *json_text ="https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952e";
-  		
+  		const gchar *json_text ="https://api.spoonacular.com/recipes/716429/information?apiKey=759b7e6c793c4ec8bff63b4940a952ed";
+  		g_print("lol%s\n", param);
   		gchar *result = g_strdup_printf("%s%s", json_text, param);
+  		g_print("%s\n", result);
   		// Configuration de l'URL de l'API
         	curl_easy_setopt(curl, CURLOPT_URL, result);
         

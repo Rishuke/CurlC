@@ -20,7 +20,7 @@ https://api.spoonacular.com/recipes/complexSearch?query=pasta&maxFat=25&number=2
 
 _________________________________________________________________________________________________________________________________________________________
 
-Pour 0 parametre(ComplexSearch): https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed
+Pour 0 parametre(ComplexSearch):   https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed
 Pour 3 parametres:(ComplexSearch); https://api.spoonacular.com/recipes/complexSearch?apiKey=759b7e6c793c4ec8bff63b4940a952ed&maxFat=25&number=2&query=pasta
 
 Pour 3 parametres(FindByNutrients): https://api.spoonacular.com/recipes/findByNutrients?apiKey=759b7e6c793c4ec8bff63b4940a952ed&number=2&maxCarbs=50&minCarbs=10
